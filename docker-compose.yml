@@ -1,0 +1,11 @@
+version: '3.3'
+services:
+  database:
+    image: "postgres"
+    container_name: Check-point
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=check_point      
+    ports:
+      - "5437:5432"
