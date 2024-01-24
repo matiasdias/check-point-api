@@ -1,4 +1,4 @@
-package db
+package config
 
 import (
 	"database/sql"
@@ -8,11 +8,13 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 var (
-	Door   = 0
-	Driver = "postgres"
+	Door      = 0
+	Driver    = "postgres"
+	SecretKey []byte
 )
 
 func Connection() (*sql.DB, error) {
@@ -31,6 +33,7 @@ func Connection() (*sql.DB, error) {
 	pgHost := os.Getenv("DB_HOST")
 	pgPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
+	SecretKey = []byte(os.Getenv("API_SECRET"))
 
 	Connection := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s",
 		pgHost, pgPort, dbUser, dbName, pgPass,
@@ -45,5 +48,7 @@ func Connection() (*sql.DB, error) {
 		defer db.Close()
 		return nil, err
 	}
+
 	return db, nil
+
 }
