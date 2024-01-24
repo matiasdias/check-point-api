@@ -23,6 +23,13 @@ var routesEmployee = []Routers{
 
 	{
 		URI:            "/employee/{employeeID}",
+		Method:         http.MethodGet,
+		Function:       controllers.ListID,
+		Authencication: false,
+	},
+
+	{
+		URI:            "/employee/{employeeID}",
 		Method:         http.MethodPut,
 		Function:       controllers.Update,
 		Authencication: false,
