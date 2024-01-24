@@ -135,9 +135,30 @@ func (e employee) DeleteRepositoryEmployee(ctx context.Context, ID uint64) error
 
 	_, err := e.db.ExecContext(ctx, query, ID)
 	if err != nil {
-		log.Printf("Error delte employee with ID %d: %v", ID, err)
+		log.Printf("Error delete employee with ID %d: %v", ID, err)
 		return err
 	}
 
 	return nil
+}
+
+func (e employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (models.Employee, error) {
+	query := "SELECT id, nome, email, telefone, idade, cpf, cargo, criadoem FROM public.funcionario WHERE id = $1"
+
+	var employee models.Employee
+	err := e.db.QueryRowContext(ctx, query, ID).
+		Scan(&employee.ID,
+			&employee.Name,
+			&employee.Email,
+			&employee.Telephone,
+			&employee.Age,
+			&employee.CPF,
+			&employee.Office,
+			&employee.CriadoEm)
+	if err != nil {
+		log.Printf("Error list employee with ID %d: %v", ID, err)
+		return models.Employee{}, err
+	}
+
+	return employee, nil
 }
