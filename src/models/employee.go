@@ -52,6 +52,12 @@ func (e *Employee) validate(stage string) error {
 			return err
 		}
 	}
+	if e.Age >= 18 {
+		return errors.New("Age cannot be less than 18")
+	}
+	if e.Office == "" {
+		return errors.New("Office is required and cannot be blank")
+	}
 	if stage == "cadastro" && e.PassWord == "" {
 		return errors.New("Password is required and cannot be blank")
 	}

@@ -13,4 +13,11 @@ var routesEmployee = []Routers{
 		Function:       controllers.Create,
 		Authencication: false,
 	},
+
+	{
+		URI:            "/employee",
+		Method:         http.MethodGet,
+		Function:       controllers.List,
+		Authencication: false,
+	},
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 )
 
 func Create(w http.ResponseWriter, r *http.Request) {
@@ -53,4 +54,42 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(responseJSON)
+}
+
+func List(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	value := strings.ToLower(r.URL.Query().Get("search"))
+
+	db, err := config.Connection()
+	if err != nil {
+		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	repository := repository.NewRepositoryEmployee(db)
+
+	var listEmployee []models.Employee
+
+	if value == "" {
+		listEmployee, err = repository.ListAllEmployee(ctx)
+	} else {
+		listEmployee, err = repository.ListRepositoryParamsEmployee(ctx, value)
+	}
+
+	if err != nil {
+		http.Error(w, "Error fetching employee list", http.StatusInternalServerError)
+		return
+	}
+
+	responseJSON, err := json.Marshal(listEmployee)
+	if err != nil {
+		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseJSON)
+
 }
