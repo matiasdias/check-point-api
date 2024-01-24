@@ -4,6 +4,9 @@ import (
 	"check-point/src/models"
 	"context"
 	"database/sql"
+	"errors"
+	"strconv"
+	"strings"
 )
 
 type employee struct {
@@ -33,4 +36,82 @@ func (e employee) CreateRepositoryEmployee(ctx context.Context, employee models.
 
 	employee.ID = employeeID
 	return &employee, nil
+}
+
+func (e employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error) {
+	query := "SELECT nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario ORDER BY id ASC"
+
+	rows, err := e.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	employees := []models.Employee{}
+
+	for rows.Next() {
+		var employee models.Employee
+		if err = rows.Scan(
+			&employee.Name,
+			&employee.Email,
+			&employee.Telephone,
+			&employee.Office,
+			&employee.Age,
+			&employee.CPF,
+			&employee.CriadoEm); err != nil {
+			return nil, err
+		}
+		employees = append(employees, employee)
+	}
+	return employees, nil
+
+}
+
+func (e employee) ListRepositoryParamsEmployee(ctx context.Context, params string) ([]models.Employee, error) {
+	selectQuery := "SELECT id, nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario WHERE"
+
+	condition := []string{}
+
+	values := []interface{}{}
+
+	searchValues := strings.Fields(params)
+
+	for _, val := range searchValues {
+		condition = append(condition, "(nome ILIKE $"+strconv.Itoa(len(values)+1)+
+			" OR email ILIKE $"+strconv.Itoa(len(values)+2)+
+			" OR cargo ILIKE $"+strconv.Itoa(len(values)+3)+")")
+		values = append(values, "%"+val+"%", "%"+val+"%", "%"+val+"%")
+	}
+
+	if len(condition) == 0 { //len() comprimento da string, array e slice
+		return nil, errors.New("No search parameters provided")
+	}
+
+	fullQuery := selectQuery + " " + strings.Join(condition, " AND ")
+	rows, err := e.db.QueryContext(ctx, fullQuery, values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	employees := []models.Employee{}
+
+	for rows.Next() {
+		var employee models.Employee
+		if err := rows.Scan(
+			&employee.ID,
+			&employee.Name,
+			&employee.Email,
+			&employee.Telephone,
+			&employee.Office,
+			&employee.Age,
+			&employee.CPF,
+			&employee.CriadoEm,
+		); err != nil {
+			return nil, err
+		}
+		employees = append(employees, employee)
+	}
+
+	return employees, nil
 }
