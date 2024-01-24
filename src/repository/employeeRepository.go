@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -39,7 +40,7 @@ func (e employee) CreateRepositoryEmployee(ctx context.Context, employee models.
 }
 
 func (e employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error) {
-	query := "SELECT nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario ORDER BY id ASC"
+	query := "SELECT id, nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario ORDER BY id ASC"
 
 	rows, err := e.db.QueryContext(ctx, query)
 	if err != nil {
@@ -52,6 +53,7 @@ func (e employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error
 	for rows.Next() {
 		var employee models.Employee
 		if err = rows.Scan(
+			&employee.ID,
 			&employee.Name,
 			&employee.Email,
 			&employee.Telephone,
@@ -114,4 +116,16 @@ func (e employee) ListRepositoryParamsEmployee(ctx context.Context, params strin
 	}
 
 	return employees, nil
+}
+
+func (e employee) UpdateRepositoryEmployee(ctx context.Context, ID uint64, employee models.Employee) error {
+	query := "UPDATE public.funcionario SET nome = $1, email = $2, telefone = $3, cargo = $4, idade = $5 WHERE id = $6"
+
+	_, err := e.db.ExecContext(ctx, query, employee.Name, employee.Email, employee.Telephone, employee.Office, employee.Age, ID)
+	if err != nil {
+		log.Printf("Error updating employee with ID %d: %v", ID, err)
+		return err
+	}
+
+	return nil
 }
