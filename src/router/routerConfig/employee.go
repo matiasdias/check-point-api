@@ -27,4 +27,11 @@ var routesEmployee = []Routers{
 		Function:       controllers.Update,
 		Authencication: false,
 	},
+
+	{
+		URI:            "/employee/{employeeID}",
+		Method:         http.MethodDelete,
+		Function:       controllers.Delete,
+		Authencication: false,
+	},
 }

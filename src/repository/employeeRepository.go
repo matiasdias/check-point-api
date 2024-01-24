@@ -70,7 +70,7 @@ func (e employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error
 }
 
 func (e employee) ListRepositoryParamsEmployee(ctx context.Context, params string) ([]models.Employee, error) {
-	selectQuery := "SELECT id, nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario WHERE"
+	selectQuery := "SELECT id, nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario ORDER BY id ASC WHERE"
 
 	condition := []string{}
 
@@ -124,6 +124,18 @@ func (e employee) UpdateRepositoryEmployee(ctx context.Context, ID uint64, emplo
 	_, err := e.db.ExecContext(ctx, query, employee.Name, employee.Email, employee.Telephone, employee.Office, employee.Age, ID)
 	if err != nil {
 		log.Printf("Error updating employee with ID %d: %v", ID, err)
+		return err
+	}
+
+	return nil
+}
+
+func (e employee) DeleteRepositoryEmployee(ctx context.Context, ID uint64) error {
+	query := "DELETE FROM public.funcionario WHERE id = $1"
+
+	_, err := e.db.ExecContext(ctx, query, ID)
+	if err != nil {
+		log.Printf("Error delte employee with ID %d: %v", ID, err)
 		return err
 	}
 

@@ -102,7 +102,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	employeeID, err := strconv.ParseUint(vars["employeeID"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		http.Error(w, "Invalid employee ID", http.StatusBadRequest)
 		return
 	}
 
@@ -146,4 +146,37 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(responseJSON)
 
+}
+
+func Delete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	vars := mux.Vars(r)
+	employeeID, err := strconv.ParseUint(vars["employeeID"], 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid employee ID", http.StatusBadRequest)
+		return
+	}
+	db, err := config.Connection()
+	if err != nil {
+		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	repository := repository.NewRepositoryEmployee(db)
+	if err = repository.DeleteRepositoryEmployee(ctx, employeeID); err != nil {
+		http.Error(w, "Error deleted employee", http.StatusInternalServerError)
+		return
+	}
+
+	message := "Employee deleted successfully"
+	responseJSON, err := json.Marshal(map[string]string{"message": message})
+	if err != nil {
+		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseJSON)
 }
