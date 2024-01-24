@@ -10,6 +10,11 @@ import (
 	"github.com/badoux/checkmail"
 )
 
+const (
+	Cadastro = "cadastro"
+	Edição   = "edicao"
+)
+
 type Employee struct {
 	ID        uint64    `json:"id,omitempty"`
 	Name      string    `json:"nome,omitempty"`
@@ -44,37 +49,41 @@ func (e *Employee) validate(stage string) error {
 	if e.Telephone == "" {
 		return errors.New("Phone is required and cannot be blank")
 	}
-	if e.CPF == "" {
-		return errors.New("CPF is required and cannot be blank")
-	} else {
-		err := utils.FormatCPF(e.CPF)
-		if err != nil {
-			return err
+
+	if stage == Cadastro {
+		if e.CPF == "" {
+			return errors.New("CPF is required and cannot be blank")
+		} else {
+			err := utils.FormatCPF(e.CPF)
+			if err != nil {
+				return err
+			}
 		}
 	}
-	if e.Age >= 18 {
+	if e.Age < 18 {
 		return errors.New("Age cannot be less than 18")
 	}
 	if e.Office == "" {
 		return errors.New("Office is required and cannot be blank")
 	}
-	if stage == "cadastro" && e.PassWord == "" {
+	if stage == Cadastro && e.PassWord == "" {
 		return errors.New("Password is required and cannot be blank")
 	}
 
 	return nil
 }
-func (u *Employee) formatting(stage string) error {
-	u.Name = strings.TrimSpace(u.Name)
-	u.Email = strings.TrimSpace(u.Email)
-	u.Telephone = strings.TrimSpace(u.Telephone)
 
-	if stage == "cadastro" {
-		passWordHash, err := security.Hash(u.PassWord)
+func (e *Employee) formatting(stage string) error {
+	e.Name = strings.TrimSpace(e.Name)
+	e.Email = strings.TrimSpace(e.Email)
+	e.Telephone = strings.TrimSpace(e.Telephone)
+
+	if stage == Cadastro {
+		passWordHash, err := security.Hash(e.PassWord)
 		if err != nil {
 			return err
 		}
-		u.PassWord = string(passWordHash)
+		e.PassWord = string(passWordHash)
 	}
 	return nil
 }
