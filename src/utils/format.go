@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-// FormatCPF formata um CPF adicionando pontos e traço
+// FormatCPF formata um CPF adicionando pontos e traços
 func FormatCPF(cpf string) error {
 	re := regexp.MustCompile("\\D")
 	cpf = re.ReplaceAllString(cpf, "")
