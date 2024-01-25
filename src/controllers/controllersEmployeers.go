@@ -4,6 +4,7 @@ import (
 	"check-point/src/config"
 	"check-point/src/models"
 	"check-point/src/repository"
+	"check-point/src/security"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -206,6 +207,70 @@ func ListID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responseJSON, err := json.Marshal(employee)
+	if err != nil {
+		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseJSON)
+}
+
+func UpdatePassWord(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	vars := mux.Vars(r)
+	employeeID, err := strconv.ParseUint(vars["employeeID"], 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid employee ID", http.StatusBadRequest)
+		return
+	}
+	request, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error getting body data", http.StatusUnprocessableEntity)
+		return
+	}
+
+	var pass models.UpdatePassWord
+
+	if err = json.Unmarshal(request, &pass); err != nil {
+		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+		return
+	}
+
+	db, err := config.Connection()
+	if err != nil {
+		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		return
+	}
+
+	defer db.Close()
+
+	repository := repository.NewRepositoryEmployee(db)
+	passSaveBank, err := repository.ListByPass(ctx, employeeID)
+	if err != nil {
+		http.Error(w, "Error search passWord employee", http.StatusInternalServerError)
+		return
+	}
+
+	if err = security.VerifyPassWord(passSaveBank, pass.CurrentPassWord); err != nil {
+		http.Error(w, "The password saved in the bank is different from the current password", http.StatusUnauthorized)
+		return
+	}
+
+	newPassWordHash, err := security.Hash(pass.NewPassWord)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err = repository.UpdatePassWord(ctx, employeeID, string(newPassWordHash)); err != nil {
+		http.Error(w, "Error updating password", http.StatusInternalServerError)
+		return
+	}
+
+	message := "Employee updated passWord successfully"
+	responseJSON, err := json.Marshal(map[string]string{"message": message})
 	if err != nil {
 		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
 		return

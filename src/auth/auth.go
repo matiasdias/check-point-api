@@ -13,12 +13,12 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-func CreateToken(userID uint64, userEmail string) (string, error) {
+func CreateToken(employeeID uint64, employeeEmail string) (string, error) {
 	permission := jwt.MapClaims{}
 	permission["authorized"] = true
 	permission["exp"] = time.Now().Add(time.Hour * 6).Unix()
-	permission["userId"] = userID
-	permission["email"] = userEmail
+	permission["employeeID"] = employeeID
+	permission["email"] = employeeEmail
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permission)
 
@@ -45,11 +45,11 @@ func ExtractIDUserToken(r *http.Request) (uint64, error) {
 		return 0, err
 	}
 	if permission, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		userID, err := strconv.ParseUint(fmt.Sprintf("%.0f", permission["userId"]), 10, 64)
+		employeeID, err := strconv.ParseUint(fmt.Sprintf("%.0f", permission["employeeID"]), 10, 64)
 		if err != nil {
 			return 0, err
 		}
-		return userID, nil
+		return employeeID, nil
 	}
 	return 0, errors.New("Invalid token!")
 }
