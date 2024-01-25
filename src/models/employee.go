@@ -17,13 +17,13 @@ const (
 
 type Employee struct {
 	ID        uint64    `json:"id,omitempty"`
-	Name      string    `json:"nome,omitempty"`
-	Email     string    `json:"email,omitempty"`
-	Telephone string    `json:"telefone,omitempty"`
-	PassWord  string    `json:"senha,omitempty"`
-	CPF       string    `json:"cpf,omitempty"`
-	Office    string    `json:"office,omitempty"`
-	Age       uint64    `json:"age,omitempty"`
+	Name      string    `json:"nome,omitempty" binding:"required"`
+	Email     string    `json:"email,omitempty" binding:"required"`
+	Telephone string    `json:"telefone,omitempty" binding:"required"`
+	PassWord  string    `json:"senha,omitempty" binding:"required"`
+	CPF       string    `json:"cpf,omitempty" binding:"required"`
+	Office    string    `json:"office,omitempty" binding:"required"`
+	Age       uint64    `json:"age,omitempty" binding:"required"`
 	CriadoEm  time.Time `json:"criadoEm,omitempty"`
 }
 

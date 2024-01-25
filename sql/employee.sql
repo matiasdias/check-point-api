@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS funcionario (
 	idade integer NOT NULL,   
     cpf varchar(11) NOT NULL UNIQUE,
     senha varchar(100) NOT NULL,
-    criadoEm timestamp DEFAULT current_timestamp NOT NULL
+    criadoem timestamp DEFAULT current_timestamp NOT NULL
 );
