@@ -17,6 +17,7 @@ type Routers struct {
 // Config serve para colocando as rotas dentro do router
 func Config(r *mux.Router) *mux.Router {
 	routers := routesEmployee
+	routers = append(routers, routeLogin)
 	for _, router := range routers {
 		if router.Authencication {
 			r.HandleFunc(router.URI, middlewares.Logger(middlewares.Authenticate(router.Function))).

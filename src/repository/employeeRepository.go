@@ -162,3 +162,38 @@ func (e employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (mode
 
 	return employee, nil
 }
+
+func (e employee) ListByPass(ctx context.Context, employeeID uint64) (string, error) {
+	query := "SELECT senha FROM public.funcionario WHERE id = $1"
+	var employee models.Employee
+	err := e.db.QueryRowContext(ctx, query, employeeID).Scan(&employee.PassWord)
+	if err != nil {
+		return "", err
+	}
+
+	return employee.PassWord, nil
+}
+
+func (e employee) UpdatePassWord(ctx context.Context, employeeID uint64, passWord string) error {
+	query := "UPDATE public.funcionario SET senha = $1 WHERE id = $2"
+
+	_, err := e.db.ExecContext(ctx, query, passWord, employeeID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e employee) FindByEmail(ctx context.Context, Email string) (models.Employee, error) {
+	query := "SELECT id, email, senha FROM public.funcionario WHERE email = $1"
+
+	var employee models.Employee
+	err := e.db.QueryRowContext(ctx, query, Email).Scan(&employee.ID, &employee.Email, &employee.PassWord)
+	if err != nil {
+		return models.Employee{}, err
+	}
+
+	return employee, nil
+
+}
