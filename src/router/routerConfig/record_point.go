@@ -9,7 +9,7 @@ var routesRecordPoint = []Routers{
 	{
 		URI:            "/recordPoint",
 		Method:         http.MethodPost,
-		Function:       controllers.Create,
+		Function:       controllers.CreateRecordPoint,
 		Authencication: false,
 	},
 }

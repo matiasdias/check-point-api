@@ -18,6 +18,7 @@ type Routers struct {
 func Config(r *mux.Router) *mux.Router {
 	routers := routesEmployee
 	routers = append(routers, routeLogin)
+	routers = append(routers, routesRecordPoint...)
 	for _, router := range routers {
 		if router.Authencication {
 			r.HandleFunc(router.URI, middlewares.Logger(middlewares.Authenticate(router.Function))).
