@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"check-point/src/config"
+	config "check-point/src/db"
 	"check-point/src/models"
 	"check-point/src/repository"
 	"encoding/json"

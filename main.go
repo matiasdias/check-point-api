@@ -1,7 +1,7 @@
 package main
 
 import (
-	"check-point/src/config"
+	config "check-point/src/db"
 	"check-point/src/router"
 	"fmt"
 	"log"
