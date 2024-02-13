@@ -12,4 +12,11 @@ var routesRecordPoint = []Routers{
 		Function:       controllers.CreateRecordPoint,
 		Authencication: false,
 	},
+
+	{
+		URI:            "/recordPoint",
+		Method:         http.MethodGet,
+		Function:       controllers.ListRecordPoint,
+		Authencication: false,
+	},
 }
