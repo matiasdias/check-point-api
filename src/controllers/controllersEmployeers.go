@@ -1,12 +1,13 @@
 package controllers
 
 import (
-	"check-point/src/config"
+	config "check-point/src/db"
 	"check-point/src/models"
 	"check-point/src/repository"
 	"check-point/src/security"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -37,6 +38,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 
 	db, err := config.Connection()
 	if err != nil {
+		log.Printf("Error connecting to database: %v\n", err)
 		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
 		return
 	}

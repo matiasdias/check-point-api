@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"check-point/src/config"
+	config "check-point/src/db"
 	"errors"
 	"fmt"
 	"net/http"

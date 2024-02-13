@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"check-point/src/auth"
-	"check-point/src/config"
+	config "check-point/src/db"
 	"check-point/src/models"
 	"check-point/src/repository"
 	"check-point/src/security"
