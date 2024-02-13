@@ -27,6 +27,17 @@ type Employee struct {
 	CriadoEm  time.Time `json:"criadoEm,omitempty"`
 }
 
+type EmployeeResponse struct {
+	ID        uint64    `json:"id,omitempty"`
+	Name      string    `json:"nome,omitempty" binding:"required"`
+	Email     string    `json:"email,omitempty" binding:"required"`
+	Telephone string    `json:"telefone,omitempty" binding:"required"`
+	CPF       string    `json:"cpf,omitempty" binding:"required"`
+	Office    string    `json:"office,omitempty" binding:"required"`
+	Age       uint64    `json:"age,omitempty" binding:"required"`
+	CriadoEm  time.Time `json:"criadoEm,omitempty"`
+}
+
 func (e *Employee) Prepare(stage string) error {
 	if err := e.validate(stage); err != nil {
 		return err
