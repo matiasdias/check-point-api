@@ -1,9 +1,3 @@
-CREATE DATABASE IF NOT EXISTS check_point 
-
-USE check_point
-
-DROP TABLE IF NOT EXISTS funcionario
-
 CREATE TABLE IF NOT EXISTS funcionario (
     id serial PRIMARY KEY, 
     nome varchar(50) NOT NULL, 
