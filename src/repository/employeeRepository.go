@@ -19,7 +19,7 @@ func NewRepositoryEmployee(db *sql.DB) *employee {
 	return &employee{db: db}
 }
 
-func (e employee) CreateRepositoryEmployee(ctx context.Context, employee models.Employee) (*models.Employee, error) {
+func (e employee) CreateRepositoryEmployee(ctx context.Context, employee models.Employee) (*models.EmployeeResponse, error) {
 
 	insertQuery := "INSERT INTO public.funcionario (nome, email, telefone, senha, idade, cpf, cargo) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
 
@@ -35,8 +35,18 @@ func (e employee) CreateRepositoryEmployee(ctx context.Context, employee models.
 		return nil, err
 	}
 
-	employee.ID = employeeID
-	return &employee, nil
+	employeeResponse := &models.EmployeeResponse{
+		ID:        employeeID,
+		Name:      employee.Name,
+		Email:     employee.Email,
+		Telephone: employee.Telephone,
+		CPF:       employee.CPF,
+		Office:    employee.Office,
+		Age:       employee.Age,
+		CriadoEm:  employee.CriadoEm,
+	}
+
+	return employeeResponse, nil
 }
 
 func (e employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error) {

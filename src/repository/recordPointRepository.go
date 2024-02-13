@@ -4,6 +4,9 @@ import (
 	"check-point/src/models"
 	"context"
 	"database/sql"
+	"errors"
+	"strconv"
+	"strings"
 )
 
 type recordPoint struct {
@@ -32,4 +35,76 @@ func (r *recordPoint) CreateRecordPoint(ctx context.Context, point models.Regist
 
 	point.ID = pointID
 	return &point, nil
+}
+
+func (r recordPoint) ListAllRecordPoint(ctx context.Context) ([]models.RecordWithEmployee, error) {
+	query := "SELECT r.id, r.codigo_funcionario, f.nome, f.email, r.tipo_registro FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id ORDER BY r.id ASC"
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	record := []models.RecordWithEmployee{}
+
+	for rows.Next() {
+		var recordP models.RecordWithEmployee
+		if err = rows.Scan(
+			&recordP.ID,
+			&recordP.EmployeeCode,
+			&recordP.Name,
+			&recordP.Email,
+			&recordP.RecordType,
+		); err != nil {
+			return nil, err
+		}
+		record = append(record, recordP)
+	}
+	return record, nil
+
+}
+
+func (r recordPoint) ListRepositoryParamsRecordPoint(ctx context.Context, params string) ([]models.RecordWithEmployee, error) {
+	selectQuery := "SELECT r.id, r.codigo_funcionario, f.nome, f.email, r.tipo_registro FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id ORDER BY r.id ASC WHERE"
+
+	condition := []string{}
+
+	values := []interface{}{}
+
+	searchValues := strings.Fields(params)
+
+	for _, val := range searchValues {
+		condition = append(condition, "(tipo_registro ILIKE $"+strconv.Itoa(len(values)+1)+")")
+		values = append(values, "%"+val+"%")
+	}
+
+	if len(condition) == 0 { //len() comprimento da string, array e slice
+		return nil, errors.New("No search parameters provided")
+	}
+
+	fullQuery := selectQuery + " " + strings.Join(condition, " AND ")
+	rows, err := r.db.QueryContext(ctx, fullQuery, values...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	record := []models.RecordWithEmployee{}
+
+	for rows.Next() {
+		var recordP models.RecordWithEmployee
+		if err := rows.Scan(
+			&recordP.ID,
+			&recordP.EmployeeCode,
+			&recordP.Name,
+			&recordP.Email,
+			&recordP.RecordType,
+		); err != nil {
+			return nil, err
+		}
+		record = append(record, recordP)
+	}
+
+	return record, nil
 }

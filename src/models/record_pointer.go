@@ -18,10 +18,13 @@ type RegisterPointer struct {
 }
 
 func (r *RegisterPointer) PreparePoint() error {
+	if err := r.validate(); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (r *RegisterPointer) validate(stage string) error {
+func (r *RegisterPointer) validate() error {
 	if r.EmployeeCode == 0 { // obs: o zero é considerado vazio em go
 		return errors.New("The employee code is required and cannot be blank")
 	}
