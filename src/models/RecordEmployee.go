@@ -6,4 +6,5 @@ type RecordWithEmployee struct {
 	RecordType   string `json:"tipo_registro" binding:"required"`
 	Name         string `json:"nome,omitempty" binding:"required"`
 	Email        string `json:"email,omitempty" binding:"required"`
+	Office       string `json:"office,omitempty" binding:"required"`
 }
