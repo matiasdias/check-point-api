@@ -1,21 +1,18 @@
-package config
+package db
 
 import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
+	"io/ioutil"
 	"os"
-	"strconv"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 var (
-	Door      = 0
-	Driver    = "postgres"
-	SecretKey []byte
+	Driver        = "postgres"
+	APIConfigInfo APIConfig
 )
 
 type DatabaseConfig struct {
@@ -26,9 +23,31 @@ type DatabaseConfig struct {
 	DBPort     string `json:"db_port"`
 }
 
-func LoadDatabaseConfig(filename string) (DatabaseConfig, error) {
+type APIConfig struct {
+	APIPort   int    `json:"api_port"`
+	APISecret string `json:"api_secret"`
+}
+
+func LoadAPIConfig(filePath string) (APIConfig, error) {
+	var config APIConfig
+
+	// Lê o conteúdo do arquivo JSON
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return config, err
+	}
+
+	// Decodifica o conteúdo do arquivo JSON para a estrutura APIConfig
+	if err := json.Unmarshal(data, &config); err != nil {
+		return config, err
+	}
+
+	return config, nil
+}
+
+func LoadDatabaseConfig(filePath string) (DatabaseConfig, error) {
 	var dbConfig DatabaseConfig
-	file, err := os.Open(filename)
+	file, err := os.Open(filePath)
 	if err != nil {
 		return dbConfig, fmt.Errorf("failed to open config file: %w", err)
 	}
@@ -42,22 +61,17 @@ func LoadDatabaseConfig(filename string) (DatabaseConfig, error) {
 }
 
 func Connection() (*sql.DB, error) {
-	var err error
-	if err = godotenv.Load(); err != nil {
-		log.Fatal(err)
-	}
-	apiPortStr := os.Getenv("API_PORT")
-	Door, err = strconv.Atoi(apiPortStr)
-	if err != nil {
-		Door = 3002
-	}
 
 	dbConfig, err := LoadDatabaseConfig("config/config.api.json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load database config: %w", err)
 	}
 
-	SecretKey = []byte(os.Getenv("API_SECRET"))
+	// Carrega as configurações da API do arquivo JSON
+	APIConfigInfo, err = LoadAPIConfig("config/config.api.json")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load API config: %w", err)
+	}
 
 	connectionString := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s",
 		dbConfig.DBHost, dbConfig.DBPort, dbConfig.DBUser, dbConfig.DBName, dbConfig.DBPassword,
