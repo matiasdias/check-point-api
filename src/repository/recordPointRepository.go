@@ -38,7 +38,7 @@ func (r *recordPoint) CreateRecordPoint(ctx context.Context, point models.Regist
 }
 
 func (r recordPoint) ListAllRecordPoint(ctx context.Context) ([]models.RecordWithEmployee, error) {
-	query := "SELECT r.id, r.codigo_funcionario, f.nome, f.email, r.tipo_registro FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id ORDER BY r.id ASC"
+	query := "SELECT r.id, r.codigo_funcionario, f.nome, f.email, r.tipo_registro, f.cargo FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id ORDER BY r.id ASC"
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -56,6 +56,7 @@ func (r recordPoint) ListAllRecordPoint(ctx context.Context) ([]models.RecordWit
 			&recordP.Name,
 			&recordP.Email,
 			&recordP.RecordType,
+			&recordP.Office,
 		); err != nil {
 			return nil, err
 		}
@@ -66,7 +67,7 @@ func (r recordPoint) ListAllRecordPoint(ctx context.Context) ([]models.RecordWit
 }
 
 func (r recordPoint) ListRepositoryParamsRecordPoint(ctx context.Context, params string) ([]models.RecordWithEmployee, error) {
-	selectQuery := "SELECT r.id, r.codigo_funcionario, f.nome, f.email, r.tipo_registro FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id ORDER BY r.id ASC WHERE"
+	selectQuery := "SELECT r.id, r.codigo_funcionario, f.nome, f.email, r.tipo_registro FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id"
 
 	condition := []string{}
 
@@ -83,7 +84,7 @@ func (r recordPoint) ListRepositoryParamsRecordPoint(ctx context.Context, params
 		return nil, errors.New("No search parameters provided")
 	}
 
-	fullQuery := selectQuery + " " + strings.Join(condition, " AND ")
+	fullQuery := selectQuery + " WHERE " + strings.Join(condition, " AND ") + " ORDER BY id ASC"
 	rows, err := r.db.QueryContext(ctx, fullQuery, values...)
 	if err != nil {
 		return nil, err

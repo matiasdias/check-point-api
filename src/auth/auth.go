@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -22,8 +21,8 @@ func CreateToken(employeeID uint64, employeeEmail string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permission)
 
-	secretKey := []byte(os.Getenv("API_SECRET"))
-	return token.SignedString([]byte(secretKey))
+	//secretKey := []byte(os.Getenv("API_SECRET"))
+	return token.SignedString([]byte(config.APIConfigInfo.APISecret))
 }
 
 func ValidateToken(r *http.Request) error {
@@ -67,5 +66,5 @@ func returnKeyVerify(token *jwt.Token) (interface{}, error) {
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 		return nil, fmt.Errorf("Metodo de assinatura inesperado: %v", token.Header["alg"])
 	}
-	return config.SecretKey, nil
+	return config.APIConfigInfo.APISecret, nil
 }
