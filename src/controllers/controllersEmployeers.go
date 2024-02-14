@@ -88,6 +88,11 @@ func List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if value != "" && len(listEmployee) == 0 {
+		http.Error(w, "Employee not found", http.StatusNotFound)
+		return
+	}
+
 	responseJSON, err := json.Marshal(listEmployee)
 	if err != nil {
 		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
