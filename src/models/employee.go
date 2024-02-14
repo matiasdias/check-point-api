@@ -25,6 +25,7 @@ type Employee struct {
 	Office    string    `json:"office,omitempty" binding:"required"`
 	Age       uint64    `json:"age,omitempty" binding:"required"`
 	CriadoEm  time.Time `json:"criadoEm,omitempty"`
+	UpdateEm  time.Time `json:"updateem,omitempty"`
 }
 
 type EmployeeResponse struct {
@@ -36,6 +37,7 @@ type EmployeeResponse struct {
 	Office    string    `json:"office,omitempty" binding:"required"`
 	Age       uint64    `json:"age,omitempty" binding:"required"`
 	CriadoEm  time.Time `json:"criadoEm,omitempty"`
+	UpdateEm  time.Time `json:"updateem,omitempty"`
 }
 
 func (e *Employee) Prepare(stage string) error {

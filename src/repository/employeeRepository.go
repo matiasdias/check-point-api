@@ -129,9 +129,14 @@ func (e employee) ListRepositoryParamsEmployee(ctx context.Context, params strin
 }
 
 func (e employee) UpdateRepositoryEmployee(ctx context.Context, ID uint64, employee models.Employee) error {
-	query := "UPDATE public.funcionario SET nome = $1, email = $2, telefone = $3, cargo = $4, idade = $5 WHERE id = $6"
+	query := "UPDATE public.funcionario SET nome = $1, email = $2, telefone = $3, cargo = $4, idade = $5, updateem = current_timestamp WHERE id = $6"
 
-	_, err := e.db.ExecContext(ctx, query, employee.Name, employee.Email, employee.Telephone, employee.Office, employee.Age, ID)
+	_, err := e.db.ExecContext(ctx, query,
+		employee.Name,
+		employee.Email,
+		employee.Telephone,
+		employee.Office,
+		employee.Age, ID)
 	if err != nil {
 		log.Printf("Error updating employee with ID %d: %v", ID, err)
 		return err
