@@ -61,7 +61,7 @@ func LoadDatabaseConfig(filePath string) (DatabaseConfig, error) {
 }
 
 func Connection() (*sql.DB, error) {
-
+	// Carrega as configurações do db do arquivo json
 	dbConfig, err := LoadDatabaseConfig("config/config.api.json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load database config: %w", err)
