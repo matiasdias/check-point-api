@@ -80,7 +80,7 @@ func (e employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error
 }
 
 func (e employee) ListRepositoryParamsEmployee(ctx context.Context, params string) ([]models.Employee, error) {
-	selectQuery := "SELECT id, nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario ORDER BY id ASC WHERE"
+	selectQuery := "SELECT id, nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario"
 
 	condition := []string{}
 
@@ -99,7 +99,7 @@ func (e employee) ListRepositoryParamsEmployee(ctx context.Context, params strin
 		return nil, errors.New("No search parameters provided")
 	}
 
-	fullQuery := selectQuery + " " + strings.Join(condition, " AND ")
+	fullQuery := selectQuery + " WHERE " + strings.Join(condition, " AND ") + " ORDER BY id ASC"
 	rows, err := e.db.QueryContext(ctx, fullQuery, values...)
 	if err != nil {
 		return nil, err
