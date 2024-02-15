@@ -1,6 +1,7 @@
 package db
 
 import (
+	"check-point/src/config"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -12,24 +13,11 @@ import (
 
 var (
 	Driver        = "postgres"
-	APIConfigInfo APIConfig
+	APIConfigInfo config.APIConfig
 )
 
-type DatabaseConfig struct {
-	DBName     string `json:"db_name"`
-	DBUser     string `json:"db_user"`
-	DBPassword string `json:"db_password"`
-	DBHost     string `json:"db_host"`
-	DBPort     string `json:"db_port"`
-}
-
-type APIConfig struct {
-	APIPort   int    `json:"api_port"`
-	APISecret string `json:"api_secret"`
-}
-
-func LoadAPIConfig(filePath string) (APIConfig, error) {
-	var config APIConfig
+func LoadAPIConfig(filePath string) (config.APIConfig, error) {
+	var config config.APIConfig
 
 	// Lê o conteúdo do arquivo JSON
 	data, err := ioutil.ReadFile(filePath)
@@ -45,8 +33,8 @@ func LoadAPIConfig(filePath string) (APIConfig, error) {
 	return config, nil
 }
 
-func LoadDatabaseConfig(filePath string) (DatabaseConfig, error) {
-	var dbConfig DatabaseConfig
+func LoadDatabaseConfig(filePath string) (config.DatabaseConfig, error) {
+	var dbConfig config.DatabaseConfig
 	file, err := os.Open(filePath)
 	if err != nil {
 		return dbConfig, fmt.Errorf("failed to open config file: %w", err)
