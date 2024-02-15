@@ -107,6 +107,7 @@ func List(w http.ResponseWriter, r *http.Request) {
 func Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
+
 	employeeID, err := strconv.ParseUint(vars["employeeID"], 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid employee ID", http.StatusBadRequest)
@@ -129,13 +130,39 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Abre a conexão com o banco
 	db, err := config.Connection()
 	if err != nil {
 		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
+
 	repository := repository.NewRepositoryEmployee(db)
+
+	// Pesquisa o funcionario antes de atualizar
+	existingEmployee, err := repository.ListIDRepositoryEmployee(ctx, employeeID)
+	if err != nil {
+		http.Error(w, "Error fetching employee", http.StatusInternalServerError)
+		return
+	}
+
+	// Verifica se esse funcionario existe
+	if existingEmployee.ID == uint64(0) {
+		http.Error(w, "Employee not found", http.StatusNotFound)
+		return
+	}
+
+	// Verifica se o email existe ou não no banco de dados
+	if exists, err := repository.FindByEmailExists(ctx, employee.Email); err != nil {
+		http.Error(w, "Error checking email existence", http.StatusInternalServerError)
+		return
+	} else if exists {
+		http.Error(w, "Email already exists", http.StatusConflict)
+		return
+	}
+
+	// atualiza o funcionario
 	if err = repository.UpdateRepositoryEmployee(ctx, employeeID, employee); err != nil {
 		http.Error(w, "Error update employee", http.StatusInternalServerError)
 		return
@@ -277,12 +304,27 @@ func UpdatePassWord(w http.ResponseWriter, r *http.Request) {
 
 	repository := repository.NewRepositoryEmployee(db)
 
+	// Pesquisa o funcionario antes de remover
+	existingEmployee, err := repository.ListIDRepositoryEmployee(ctx, employeeID)
+	if err != nil {
+		http.Error(w, "Error fetching employee", http.StatusInternalServerError)
+		return
+	}
+
+	// Verifica se esse funcionario existe
+	if existingEmployee.ID == uint64(0) {
+		http.Error(w, "Employee not found", http.StatusNotFound)
+		return
+	}
+
+	// Retorna a senha salva no banco do funcionairo
 	passSaveBank, err := repository.ListByPass(ctx, employeeID)
 	if err != nil {
 		http.Error(w, "Error search passWord employee", http.StatusInternalServerError)
 		return
 	}
 
+	// Verifica se a senha salva banco é igual a senha atual
 	if err = security.VerifyPassWord(passSaveBank, pass.CurrentPassWord); err != nil {
 		http.Error(w, "The password saved in the bank is different from the current password", http.StatusUnauthorized)
 		return
