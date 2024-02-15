@@ -195,6 +195,7 @@ func ListID(w http.ResponseWriter, r *http.Request) {
 
 	employeeID, err := strconv.ParseUint(vars["employeeID"], 10, 64)
 	if err != nil {
+		log.Printf("Invalid parameter: %v", err)
 		http.Error(w, "Invalid employee ID", http.StatusBadRequest)
 		return
 	}
@@ -210,6 +211,11 @@ func ListID(w http.ResponseWriter, r *http.Request) {
 	employee, err := repository.ListIDRepositoryEmployee(ctx, employeeID)
 	if err != nil {
 		http.Error(w, "Error fetching employee", http.StatusInternalServerError)
+		return
+	}
+
+	if employee.ID == uint64(0) {
+		http.Error(w, "Employee not found", http.StatusNotFound)
 		return
 	}
 

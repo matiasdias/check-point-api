@@ -171,8 +171,10 @@ func (e employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (mode
 			&employee.Office,
 			&employee.CriadoEm)
 	if err != nil {
-		log.Printf("Error list employee with ID %d: %v", ID, err)
-		return models.Employee{}, err
+		if err == sql.ErrNoRows {
+			log.Printf("Error list employee with ID %d: %v", ID, err)
+			return models.Employee{}, nil
+		}
 	}
 
 	return employee, nil
