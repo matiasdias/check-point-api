@@ -82,7 +82,6 @@ func List(w http.ResponseWriter, r *http.Request) {
 	} else {
 		listEmployee, err = repository.ListRepositoryParamsEmployee(ctx, value)
 	}
-
 	if err != nil {
 		http.Error(w, "Error fetching employee list", http.StatusInternalServerError)
 		return
@@ -135,7 +134,6 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
 		return
 	}
-
 	defer db.Close()
 	repository := repository.NewRepositoryEmployee(db)
 	if err = repository.UpdateRepositoryEmployee(ctx, employeeID, employee); err != nil {
@@ -159,11 +157,13 @@ func Update(w http.ResponseWriter, r *http.Request) {
 func Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
+
 	employeeID, err := strconv.ParseUint(vars["employeeID"], 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid employee ID", http.StatusBadRequest)
 		return
 	}
+
 	db, err := config.Connection()
 	if err != nil {
 		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
@@ -172,6 +172,21 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repository := repository.NewRepositoryEmployee(db)
+
+	// Pesquisa o funcionario antes de remover
+	existingEmployee, err := repository.ListIDRepositoryEmployee(ctx, employeeID)
+	if err != nil {
+		http.Error(w, "Error fetching employee", http.StatusInternalServerError)
+		return
+	}
+
+	// Verifica se esse funcionario existe
+	if existingEmployee.ID == uint64(0) {
+		http.Error(w, "Employee not found", http.StatusNotFound)
+		return
+	}
+
+	// Remove o funcionario caso ele exista
 	if err = repository.DeleteRepositoryEmployee(ctx, employeeID); err != nil {
 		http.Error(w, "Error deleted employee", http.StatusInternalServerError)
 		return
@@ -208,6 +223,7 @@ func ListID(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repository := repository.NewRepositoryEmployee(db)
+
 	employee, err := repository.ListIDRepositoryEmployee(ctx, employeeID)
 	if err != nil {
 		http.Error(w, "Error fetching employee", http.StatusInternalServerError)
@@ -260,6 +276,7 @@ func UpdatePassWord(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repository := repository.NewRepositoryEmployee(db)
+
 	passSaveBank, err := repository.ListByPass(ctx, employeeID)
 	if err != nil {
 		http.Error(w, "Error search passWord employee", http.StatusInternalServerError)
