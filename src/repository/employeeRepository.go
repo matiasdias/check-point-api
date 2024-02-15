@@ -214,3 +214,16 @@ func (e employee) FindByEmail(ctx context.Context, Email string) (models.Employe
 	return employee, nil
 
 }
+
+func (e employee) FindByEmailExists(ctx context.Context, Email string) (bool, error) {
+	query := "SELECT EXISTS (SELECT 1 FROM public.funcionario WHERE email = $1)"
+
+	var exists bool
+	err := e.db.QueryRowContext(ctx, query, Email).Scan(&exists)
+	if err != nil {
+		log.Printf("Error checking if email exists: %v", err)
+		return false, err
+	}
+
+	return exists, nil
+}

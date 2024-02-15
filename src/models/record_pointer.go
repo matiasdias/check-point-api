@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// RegisterPointer responsavel pelo campos do registro de ponto
 type RegisterPointer struct {
 	ID              uint64    `json:"id,omitempty"`
 	EmployeeCode    uint64    `json:"codigo_funcionario" binding:"required"`

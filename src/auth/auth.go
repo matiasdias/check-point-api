@@ -21,7 +21,6 @@ func CreateToken(employeeID uint64, employeeEmail string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permission)
 
-	//secretKey := []byte(os.Getenv("API_SECRET"))
 	return token.SignedString([]byte(config.APIConfigInfo.APISecret))
 }
 

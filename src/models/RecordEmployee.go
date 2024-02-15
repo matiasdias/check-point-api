@@ -1,5 +1,6 @@
 package models
 
+// RecordWithEmployee junção das duas structs(employee, recordPoint)
 type RecordWithEmployee struct {
 	ID           uint64 `json:"id,omitempty"`
 	EmployeeCode uint64 `json:"codigo_funcionario" binding:"required"`

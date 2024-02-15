@@ -15,6 +15,7 @@ const (
 	Edição   = "edicao"
 )
 
+// Employee struct responsavel pelo campos do funcionario
 type Employee struct {
 	ID        uint64    `json:"id,omitempty"`
 	Name      string    `json:"nome,omitempty" binding:"required"`
@@ -28,6 +29,7 @@ type Employee struct {
 	UpdateEm  time.Time `json:"updateem,omitempty"`
 }
 
+// EmployeeResponse responsavel pelo retorno dos campos do funcionario sem a senha
 type EmployeeResponse struct {
 	ID        uint64    `json:"id,omitempty"`
 	Name      string    `json:"nome,omitempty" binding:"required"`
