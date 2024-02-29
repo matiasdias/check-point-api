@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.9'
 
 services:     
   database:
@@ -13,12 +13,11 @@ services:
     volumes:
       - ./sql/employee.sql:/docker-entrypoint-initdb.d/employee.sql
       - ./sql/registerPoint.sql:/docker-entrypoint-initdb.d/registerPoint.sql
-#  backend:
-#    build:
-#       context: .
-#       dockerfile: Dockerfile
-#    container_name: check-point
-#    ports:
-#       - "3000:3000"
-#    depends_on:
-#      - database
+  backend:
+    build:
+       context: .
+       dockerfile: ./Dockerfile
+    ports:
+       - "3001:3001"
+volumes:
+  pg-data:

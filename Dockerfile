@@ -1,17 +1,16 @@
 # Use the official Golang image as the base image
-FROM golang:1.17.8
+FROM golang:1.17-alpine AS builder
 
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /check_point
 
 # Copy the local package files to the container's workspace
-COPY . .
+COPY . /check_point
 
 # Build the Go application
-RUN go build -o /usr/local/bin/check ./main.go
+# RUN go mod download
+RUN go build -o check-point ./main.go
 
-# Expose the port that the application will run on
-EXPOSE 3000
+EXPOSE 8080:8080
 
-# Command to run the executable
-CMD [ "/usr/local/bin/check" ]
+CMD [ "./check-point" ]
