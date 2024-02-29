@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"check-point/src/auth"
+	"check-point/src/token"
 	"log"
 	"net/http"
 	"time"
@@ -27,12 +27,13 @@ func Logger(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func Authenticate(next http.HandlerFunc) http.HandlerFunc {
+// Autenticar verifica se o usuario fazendo a requisição está autenticado
+func Authenticate(ProximaFuncao http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := auth.ValidateToken(r); err != nil {
+		if erro := token.ValidateToken(r); erro != nil {
 			http.Error(w, "token contains as invalid number", http.StatusUnauthorized)
 			return
 		}
-		next(w, r)
+		ProximaFuncao(w, r)
 	}
 }

@@ -6,14 +6,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 var (
-	Driver        = "postgres"
+	Driver = "postgres"
+
 	APIConfigInfo config.APIConfig
+
+	// SecretKey é a chave que vai ser usada para assinar o token
+	SecretKey []byte
 )
 
 func LoadAPIConfig(filePath string) (config.APIConfig, error) {
@@ -48,7 +54,17 @@ func LoadDatabaseConfig(filePath string) (config.DatabaseConfig, error) {
 	return dbConfig, nil
 }
 
+// Connection conexão com o banco de dados
 func Connection() (*sql.DB, error) {
+
+	var err error
+
+	if err = godotenv.Load(); err != nil {
+		log.Fatal(err)
+	}
+
+	SecretKey = []byte(os.Getenv("SECRET_KEY"))
+
 	// Carrega as configurações do db do arquivo json
 	dbConfig, err := LoadDatabaseConfig("config/config.api.json")
 	if err != nil {
@@ -61,6 +77,7 @@ func Connection() (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to load API config: %w", err)
 	}
 
+	// String de conexão
 	connectionString := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s",
 		dbConfig.DBHost, dbConfig.DBPort, dbConfig.DBUser, dbConfig.DBName, dbConfig.DBPassword,
 	)
@@ -74,8 +91,6 @@ func Connection() (*sql.DB, error) {
 		defer db.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
-
-	//log.Printf("Successfully connected to database at %s:%s", dbConfig.DBHost, dbConfig.DBPort)
 
 	return db, nil
 

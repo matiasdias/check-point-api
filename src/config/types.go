@@ -1,5 +1,6 @@
 package config
 
+// DatabaseConfig estrutura do banco de dados
 type DatabaseConfig struct {
 	DBName     string `json:"db_name"`
 	DBUser     string `json:"db_user"`
@@ -8,7 +9,7 @@ type DatabaseConfig struct {
 	DBPort     string `json:"db_port"`
 }
 
+// APIConfig estrutura referente a porta da api
 type APIConfig struct {
-	APIPort   int    `json:"api_port"`
-	APISecret string `json:"api_secret"`
+	APIPort int `json:"api_port"`
 }

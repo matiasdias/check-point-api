@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"check-point/src/auth"
 	config "check-point/src/db"
 	"check-point/src/models"
 	"check-point/src/repository"
 	"check-point/src/security"
+	"check-point/src/token"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -44,14 +44,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.CreateToken(employeeSaveBank.ID, employeeSaveBank.Email)
+	token, err := token.CreateToken(employeeSaveBank.ID)
 	if err != nil {
 		http.Error(w, "Error creating to token", http.StatusInternalServerError)
 		return
 	}
 
 	reponseToken := token
-	responseJSON, err := json.Marshal(map[string]string{"token:": reponseToken})
+	responseJSON, err := json.Marshal(map[string]string{"Token:": reponseToken})
 	if err != nil {
 		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
 		return

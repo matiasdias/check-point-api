@@ -11,6 +11,6 @@ import (
 func main() {
 	config.Connection()
 	r := router.Load()
-	fmt.Printf("Executando na porta %d", config.APIConfigInfo.APIPort)
+	fmt.Printf("Executando na porta %d\n", config.APIConfigInfo.APIPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.APIConfigInfo.APIPort), r))
 }

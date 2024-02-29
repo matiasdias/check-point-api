@@ -2,9 +2,7 @@
 "db_name": "check_point",
 "db_user": "postgres",
 "db_password": "123456",
-"db_host": "localhost",
-"db_port": "5437",
-
-"api_port":3000,
-"api_secret": "xBD4eBDIfmmm7lwsrSmNq0fv7H1BfSGJeLQYqqR6UU6g9wDQREwsIpv5Uaj9aAMSPi94Yn132gP6bLzmKcOmBg=="
+"db_host": "database",
+"db_port": "5432",
+"api_port":3001
 }

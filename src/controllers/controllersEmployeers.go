@@ -68,6 +68,7 @@ func List(w http.ResponseWriter, r *http.Request) {
 
 	db, err := config.Connection()
 	if err != nil {
+		log.Printf("Error connecting to database: %v\n", err)
 		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
 		return
 	}
