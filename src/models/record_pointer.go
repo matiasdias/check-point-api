@@ -5,11 +5,16 @@ import (
 	"time"
 )
 
-// RegisterPointer responsavel pelo campos do registro de ponto
+const (
+	edição   = "edição"
+	cadastro = "cadastro"
+)
+
+// RegisterPointer responsável pelo campos do registro de ponto
 type RegisterPointer struct {
 	ID              uint64    `json:"id,omitempty"`
-	EmployeeCode    uint64    `json:"codigo_funcionario" binding:"required"`
-	RecordType      string    `json:"tipo_registro" binding:"required"`
+	EmployeeCode    uint64    `json:"codigo_funcionario,omitempty"`
+	RecordType      string    `json:"tipo_registro,omitempty"`
 	EntryTime       time.Time `json:"hora_entrada"`
 	DepartureTime   time.Time `json:"hora_saida"`
 	CriadoEm        time.Time `json:"criadoEm,omitempty"`
@@ -18,19 +23,20 @@ type RegisterPointer struct {
 	WorkedHours     float64   `json:"horas_trabalhadas"`
 }
 
-func (r *RegisterPointer) PreparePoint() error {
-	if err := r.validate(); err != nil {
+func (r *RegisterPointer) PreparePoint(stage string) error {
+	if err := r.validate(stage); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *RegisterPointer) validate() error {
-	if r.EmployeeCode == 0 { // obs: o zero é considerado vazio em go
+func (r *RegisterPointer) validate(stage string) error {
+	if stage == edição {
+		if r.RecordType == "" {
+			return errors.New("The record type is required and cannot be blank")
+		}
+	} else if r.EmployeeCode == 0 {
 		return errors.New("The employee code is required and cannot be blank")
-	}
-	if r.RecordType == "" {
-		return errors.New("The record type is required and cannot be blank")
 	}
 
 	return nil
