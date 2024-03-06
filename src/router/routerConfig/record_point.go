@@ -19,4 +19,25 @@ var routesRecordPoint = []Routers{
 		Function:       controllers.ListRecordPoint,
 		Authencication: true,
 	},
+
+	{
+		URI:            "/recordPoint/{recordID}",
+		Method:         http.MethodGet,
+		Function:       controllers.ListIDRecordPoint,
+		Authencication: true,
+	},
+
+	{
+		URI:            "/recordPoint/{recordID}",
+		Method:         http.MethodPut,
+		Function:       controllers.UpdateRecordPoint,
+		Authencication: true,
+	},
+
+	{
+		URI:            "/recordPoint/{recordID}",
+		Method:         http.MethodDelete,
+		Function:       controllers.DeleteRecordPoint,
+		Authencication: true,
+	},
 }
