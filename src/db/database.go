@@ -14,15 +14,17 @@ import (
 )
 
 var (
+	// Driver nome do driver
 	Driver = "postgres"
 
 	APIConfigInfo config.APIConfig
 
-	// SecretKey é a chave que vai ser usada para assinar o token
+	// SecretKey chave de segurança
 	SecretKey []byte
 )
 
-func LoadAPIConfig(filePath string) (config.APIConfig, error) {
+// loadAPIConfig carrega o arquivo de configuração da API
+func loadAPIConfig(filePath string) (config.APIConfig, error) {
 	var config config.APIConfig
 
 	// Lê o conteúdo do arquivo JSON
@@ -39,7 +41,8 @@ func LoadAPIConfig(filePath string) (config.APIConfig, error) {
 	return config, nil
 }
 
-func LoadDatabaseConfig(filePath string) (config.DatabaseConfig, error) {
+// loadDatabaseConfig carrega o arquivo de configuração do banco de dados
+func loadDatabaseConfig(filePath string) (config.DatabaseConfig, error) {
 	var dbConfig config.DatabaseConfig
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -54,7 +57,7 @@ func LoadDatabaseConfig(filePath string) (config.DatabaseConfig, error) {
 	return dbConfig, nil
 }
 
-// Connection conexão com o banco de dados
+// Connection conecta com o banco de dados
 func Connection() (*sql.DB, error) {
 
 	var err error
@@ -65,19 +68,16 @@ func Connection() (*sql.DB, error) {
 
 	SecretKey = []byte(os.Getenv("SECRET_KEY"))
 
-	// Carrega as configurações do db do arquivo json
-	dbConfig, err := LoadDatabaseConfig("config/config.api.json")
+	dbConfig, err := loadDatabaseConfig("config/config.api.json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load database config: %w", err)
 	}
 
-	// Carrega as configurações da API do arquivo JSON
-	APIConfigInfo, err = LoadAPIConfig("config/config.api.json")
+	APIConfigInfo, err = loadAPIConfig("config/config.api.json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load API config: %w", err)
 	}
 
-	// String de conexão
 	connectionString := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable password=%s",
 		dbConfig.DBHost, dbConfig.DBPort, dbConfig.DBUser, dbConfig.DBName, dbConfig.DBPassword,
 	)
