@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// Create Responsável por criar um novo funcionário
 func Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	request, err := io.ReadAll(r.Body)
@@ -62,6 +63,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	w.Write(responseJSON)
 }
 
+// List Responsável por listar um novo funcionário
 func List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	value := strings.ToLower(r.URL.Query().Get("search"))
@@ -105,6 +107,7 @@ func List(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Update Responsável por atualizar um funcionário
 func Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
@@ -182,6 +185,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Delete Responsável por remover um funcionǽrio
 func Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
@@ -232,6 +236,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	w.Write(responseJSON)
 }
 
+// ListID Responsável por listar um funcionário por id
 func ListID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
@@ -274,6 +279,7 @@ func ListID(w http.ResponseWriter, r *http.Request) {
 	w.Write(responseJSON)
 }
 
+// UpdatePassWord Responsável por atualizar a senha do funcionário
 func UpdatePassWord(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)

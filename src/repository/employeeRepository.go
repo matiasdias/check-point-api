@@ -10,16 +10,17 @@ import (
 	"strings"
 )
 
-type employee struct {
+type Employee struct {
 	db *sql.DB
 }
 
-// Recebe um banco que vai ser chamada lá no controlllers
-func NewRepositoryEmployee(db *sql.DB) *employee {
-	return &employee{db: db}
+// NewRepositoryEmployee Recebe um banco que vai ser chamada através do controllers
+func NewRepositoryEmployee(db *sql.DB) *Employee {
+	return &Employee{db: db}
 }
 
-func (e employee) CreateRepositoryEmployee(ctx context.Context, employee models.Employee) (*models.EmployeeResponse, error) {
+// CreateRepositoryEmployee responsável pelo cadastro de um novo funcionário
+func (e Employee) CreateRepositoryEmployee(ctx context.Context, employee models.Employee) (*models.EmployeeResponse, error) {
 
 	insertQuery := "INSERT INTO public.funcionario (nome, email, telefone, senha, idade, cpf, cargo) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
 
@@ -49,7 +50,8 @@ func (e employee) CreateRepositoryEmployee(ctx context.Context, employee models.
 	return employeeResponse, nil
 }
 
-func (e employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error) {
+// ListAllEmployee responsável pela listagem dos funcionários
+func (e Employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error) {
 	query := "SELECT id, nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario ORDER BY id ASC"
 
 	rows, err := e.db.QueryContext(ctx, query)
@@ -79,7 +81,8 @@ func (e employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error
 
 }
 
-func (e employee) ListRepositoryParamsEmployee(ctx context.Context, params string) ([]models.Employee, error) {
+// ListRepositoryParamsEmployee responsável pela listagem do funcionário por parametros
+func (e Employee) ListRepositoryParamsEmployee(ctx context.Context, params string) ([]models.Employee, error) {
 	selectQuery := "SELECT id, nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario"
 
 	condition := []string{}
@@ -128,7 +131,8 @@ func (e employee) ListRepositoryParamsEmployee(ctx context.Context, params strin
 	return employees, nil
 }
 
-func (e employee) UpdateRepositoryEmployee(ctx context.Context, ID uint64, employee models.Employee) error {
+// UpdateRepositoryEmployee responsável pela atualização do funcionário
+func (e Employee) UpdateRepositoryEmployee(ctx context.Context, ID uint64, employee models.Employee) error {
 	query := "UPDATE public.funcionario SET nome = $1, email = $2, telefone = $3, cargo = $4, idade = $5, updateem = current_timestamp WHERE id = $6"
 
 	_, err := e.db.ExecContext(ctx, query,
@@ -145,7 +149,8 @@ func (e employee) UpdateRepositoryEmployee(ctx context.Context, ID uint64, emplo
 	return nil
 }
 
-func (e employee) DeleteRepositoryEmployee(ctx context.Context, ID uint64) error {
+// DeleteRepositoryEmployee responsável pela exclusão do funcionǽrio
+func (e Employee) DeleteRepositoryEmployee(ctx context.Context, ID uint64) error {
 	query := "DELETE FROM public.funcionario WHERE id = $1"
 
 	_, err := e.db.ExecContext(ctx, query, ID)
@@ -157,7 +162,8 @@ func (e employee) DeleteRepositoryEmployee(ctx context.Context, ID uint64) error
 	return nil
 }
 
-func (e employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (models.Employee, error) {
+// ListIDRepositoryEmployee responsávio pela listagem do funcionǽrio por ID
+func (e Employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (models.Employee, error) {
 	query := "SELECT id, nome, email, telefone, idade, cpf, cargo, criadoem FROM public.funcionario WHERE id = $1"
 
 	var employee models.Employee
@@ -180,7 +186,8 @@ func (e employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (mode
 	return employee, nil
 }
 
-func (e employee) ListByPass(ctx context.Context, employeeID uint64) (string, error) {
+// ListByPass responsável por listar a senha do funcionário
+func (e Employee) ListByPass(ctx context.Context, employeeID uint64) (string, error) {
 	query := "SELECT senha FROM public.funcionario WHERE id = $1"
 	var employee models.Employee
 	err := e.db.QueryRowContext(ctx, query, employeeID).Scan(&employee.PassWord)
@@ -191,7 +198,8 @@ func (e employee) ListByPass(ctx context.Context, employeeID uint64) (string, er
 	return employee.PassWord, nil
 }
 
-func (e employee) UpdatePassWord(ctx context.Context, employeeID uint64, passWord string) error {
+// UpdatePassWord responsável por atualizar a senha do funcionário
+func (e Employee) UpdatePassWord(ctx context.Context, employeeID uint64, passWord string) error {
 	query := "UPDATE public.funcionario SET senha = $1 WHERE id = $2"
 
 	_, err := e.db.ExecContext(ctx, query, passWord, employeeID)
@@ -202,7 +210,8 @@ func (e employee) UpdatePassWord(ctx context.Context, employeeID uint64, passWor
 	return nil
 }
 
-func (e employee) FindByEmail(ctx context.Context, Email string) (models.Employee, error) {
+// FindByEmail responsável por retornar o email e a senha do funcionário
+func (e Employee) FindByEmail(ctx context.Context, Email string) (models.Employee, error) {
 	query := "SELECT id, email, senha FROM public.funcionario WHERE email = $1"
 
 	var employee models.Employee
@@ -215,7 +224,8 @@ func (e employee) FindByEmail(ctx context.Context, Email string) (models.Employe
 
 }
 
-func (e employee) FindByEmailExists(ctx context.Context, Email string) (bool, error) {
+// FindByEmailExists responsável por verificar se o email existe
+func (e Employee) FindByEmailExists(ctx context.Context, Email string) (bool, error) {
 	query := "SELECT EXISTS (SELECT 1 FROM public.funcionario WHERE email = $1)"
 
 	var exists bool

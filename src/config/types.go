@@ -9,7 +9,7 @@ type DatabaseConfig struct {
 	DBPort     string `json:"db_port"`
 }
 
-// APIConfig estrutura referente a porta da api
+// APIConfig estrutura da API
 type APIConfig struct {
 	APIPort int `json:"api_port"`
 }

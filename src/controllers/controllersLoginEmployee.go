@@ -11,6 +11,7 @@ import (
 	"net/http"
 )
 
+// Login responsável pelo login do funcionǽrio
 func Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	request, err := io.ReadAll(r.Body)
