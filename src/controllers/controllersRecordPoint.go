@@ -4,6 +4,7 @@ import (
 	config "check-point/src/db"
 	"check-point/src/models"
 	"check-point/src/repository"
+	"check-point/src/utils"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -18,24 +19,28 @@ func CreateRecordPoint(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	request, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Error getting body data", http.StatusUnprocessableEntity)
+		err := utils.InternalServerError("Error getting body data")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	var point models.RegisterPointer
 
 	if err = json.Unmarshal(request, &point); err != nil {
-		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+		err := utils.BadRequestError("Error decoding JSON")
+		utils.RespondWithError(w, err)
 		return
 	}
 	if err = point.PreparePoint("cadastro"); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		err := utils.BadRequestError(err.Error())
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 
@@ -44,18 +49,12 @@ func CreateRecordPoint(w http.ResponseWriter, r *http.Request) {
 	repository := repository.NewRepositoryRecordPoint(db)
 	createPoint, err := repository.CreateRecordPoint(ctx, point)
 	if err != nil {
-		http.Error(w, "Error creating record point", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error creating record point")
+		utils.RespondWithError(w, err)
 		return
 	}
-	responseJSON, err := json.Marshal(createPoint)
-	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusBadRequest)
-		return
-	}
+	utils.RespondWithSuccessJSON(w, createPoint)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	w.Write(responseJSON)
 }
 
 // ListRecordPoint Responsável por retornar todos os registros
@@ -65,7 +64,8 @@ func ListRecordPoint(w http.ResponseWriter, r *http.Request) {
 
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 	defer db.Close()
@@ -80,19 +80,12 @@ func ListRecordPoint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		http.Error(w, "Error fetching record Point list", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error fetching record Point list")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	responseJSON, err := json.Marshal(listRecordPoint)
-	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
+	utils.RespondWithSuccessJSON(w, listRecordPoint)
 }
 
 // ListIDRecordPoint Responsável por retornar um registro por id
@@ -102,13 +95,15 @@ func ListIDRecordPoint(w http.ResponseWriter, r *http.Request) {
 
 	recordID, err := strconv.ParseUint(vars["recordID"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid record ID", http.StatusBadRequest)
+		err := utils.BadRequestError("Invalid record ID")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 	defer db.Close()
@@ -116,24 +111,18 @@ func ListIDRecordPoint(w http.ResponseWriter, r *http.Request) {
 	repository := repository.NewRepositoryRecordPoint(db)
 	existingPoint, err := repository.ListIDRepositoryRecordPoint(ctx, recordID)
 	if err != nil {
-		http.Error(w, "Error fetching record point", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error fetching record point")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	if existingPoint.ID == uint64(0) {
-		http.Error(w, "Record point not found", http.StatusNotFound)
+		err := utils.NotFoundError("Record point not found")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	responseJSON, err := json.Marshal(existingPoint)
-	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
+	utils.RespondWithSuccessJSON(w, existingPoint)
 }
 
 // DeleteRecordPoint Responsável por deletar um registro de ponto
@@ -143,13 +132,15 @@ func DeleteRecordPoint(w http.ResponseWriter, r *http.Request) {
 
 	recordID, err := strconv.ParseUint(vars["recordID"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid record ID", http.StatusBadRequest)
+		err := utils.BadRequestError("Invalid record ID")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 	defer db.Close()
@@ -159,33 +150,26 @@ func DeleteRecordPoint(w http.ResponseWriter, r *http.Request) {
 	// Pesquisa o ponto antes de remover
 	existingPoint, err := repository.ListIDRepositoryRecordPoint(ctx, recordID)
 	if err != nil {
-		http.Error(w, "Error fetching record point", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error fetching record poin")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	// Verifica se esse ponto existe
 	if existingPoint.ID == uint64(0) {
-		http.Error(w, "Record point not found", http.StatusNotFound)
+		err := utils.NotFoundError("Record point not found")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	if err = repository.DeleteRecordPoint(ctx, recordID); err != nil {
-		http.Error(w, "Error deleting record point", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error deleting record point")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	message := "Recod Point deleted successfully"
-	responseJSON, err := json.Marshal(map[string]string{"message": message})
-	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
-		return
-	}
+	utils.RespondWithSuccessMessage(w, "Recod Point deleted successfully")
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
-
-	return
 }
 
 // UpdateRecordPoint Responsável por atualizar um registro
@@ -195,29 +179,34 @@ func UpdateRecordPoint(w http.ResponseWriter, r *http.Request) {
 
 	recordID, err := strconv.ParseUint(vars["recordID"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid record ID", http.StatusBadRequest)
+		err := utils.BadRequestError("Invalid record ID")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	request, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Error getting body data", http.StatusUnprocessableEntity)
+		err := utils.UnprocessableEntityError("Error getting body data")
+		utils.RespondWithError(w, err)
 		return
 	}
 	var record models.RegisterPointer
 	if err = json.Unmarshal(request, &record); err != nil {
-		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+		err := utils.BadRequestError("Error decoding JSON")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	if err = record.PreparePoint("edição"); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		err := utils.BadRequestError(err.Error())
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 	defer db.Close()
@@ -226,28 +215,23 @@ func UpdateRecordPoint(w http.ResponseWriter, r *http.Request) {
 
 	existingPoint, err := repository.ListIDRepositoryRecordPoint(ctx, recordID)
 	if err != nil {
-		http.Error(w, "Error fetching record point", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error fetching record point")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	if existingPoint.ID == uint64(0) {
-		http.Error(w, "Record point not found", http.StatusNotFound)
+		err := utils.NotFoundError("Record point not found")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	if err = repository.UpdateRecordPoint(ctx, recordID, record); err != nil {
-		http.Error(w, "Error updating record point", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error updating record point")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	message := "record Type updated successfully"
-	responseJSON, err := json.Marshal(map[string]string{"message": message})
-	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
-		return
-	}
+	utils.RespondWithSuccessMessage(w, "Record Type updated successfully")
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
 }

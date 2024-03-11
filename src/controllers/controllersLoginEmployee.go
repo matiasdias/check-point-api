@@ -6,6 +6,7 @@ import (
 	"check-point/src/repository"
 	"check-point/src/security"
 	"check-point/src/token"
+	"check-point/src/utils"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -16,19 +17,22 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	request, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Error getting body data", http.StatusUnprocessableEntity)
+		err := utils.UnprocessableEntityError("Error getting body data")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	var employee models.Employee
 	if err = json.Unmarshal(request, &employee); err != nil {
-		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+		err := utils.BadRequestError("Error decoding JSON")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 	defer db.Close()
@@ -36,29 +40,25 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	repository := repository.NewRepositoryEmployee(db)
 	employeeSaveBank, err := repository.FindByEmail(ctx, employee.Email)
 	if err != nil {
-		http.Error(w, "Error fetching employee", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error fetching employee")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	if err = security.VerifyPassWord(employeeSaveBank.PassWord, employee.PassWord); err != nil {
-		http.Error(w, "Error when verifying the user's password saved in the bank", http.StatusUnauthorized)
+		err := utils.UnauthorizedError("Error when verifying the user's password saved in the bank")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	token, err := token.CreateToken(employeeSaveBank.ID)
 	if err != nil {
-		http.Error(w, "Error creating to token", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error creating to token")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	reponseToken := token
-	responseJSON, err := json.Marshal(map[string]string{"Token:": reponseToken})
-	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
-		return
+	responseToken := token
+	utils.RespondWithSuccessJSON(w, map[string]string{"Token": responseToken})
 
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
 }

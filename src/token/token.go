@@ -53,7 +53,6 @@ func ExtractEmployeeID(r *http.Request) (uint64, error) {
 		if err != nil {
 			return 0, err
 		}
-		fmt.Println(employeeID)
 
 		return employeeID, nil
 	}

@@ -8,7 +8,6 @@ WORKDIR /check_point
 COPY . /check_point
 
 # Build the Go application
-# RUN go mod download
 RUN go build -o check-point ./main.go
 
 EXPOSE 8080:8080
