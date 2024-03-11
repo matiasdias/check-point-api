@@ -1,7 +1,7 @@
 package main
 
 import (
-	"check-point/src/config"
+	config "check-point/src/db"
 	"check-point/src/router"
 	"fmt"
 	"log"
@@ -11,7 +11,6 @@ import (
 func main() {
 	config.Connection()
 	r := router.Load()
-	fmt.Printf("Executando na porta %d", config.Door)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.Door), r))
-
+	fmt.Printf("Executando na porta %d\n", config.APIConfigInfo.APIPort)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", config.APIConfigInfo.APIPort), r))
 }

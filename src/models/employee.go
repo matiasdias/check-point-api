@@ -15,6 +15,7 @@ const (
 	Edição   = "edicao"
 )
 
+// Employee responsavel pelo retorno dos campos do funcionário
 type Employee struct {
 	ID        uint64    `json:"id,omitempty"`
 	Name      string    `json:"nome,omitempty" binding:"required"`
@@ -25,6 +26,20 @@ type Employee struct {
 	Office    string    `json:"office,omitempty" binding:"required"`
 	Age       uint64    `json:"age,omitempty" binding:"required"`
 	CriadoEm  time.Time `json:"criadoEm,omitempty"`
+	UpdateEm  time.Time `json:"updateem,omitempty"`
+}
+
+// EmployeeResponse responsavel pelo retorno dos campos do funcionário sem a senha
+type EmployeeResponse struct {
+	ID        uint64    `json:"id,omitempty"`
+	Name      string    `json:"nome,omitempty" binding:"required"`
+	Email     string    `json:"email,omitempty" binding:"required"`
+	Telephone string    `json:"telefone,omitempty" binding:"required"`
+	CPF       string    `json:"cpf,omitempty" binding:"required"`
+	Office    string    `json:"office,omitempty" binding:"required"`
+	Age       uint64    `json:"age,omitempty" binding:"required"`
+	CriadoEm  time.Time `json:"criadoEm,omitempty"`
+	UpdateEm  time.Time `json:"updateem,omitempty"`
 }
 
 func (e *Employee) Prepare(stage string) error {

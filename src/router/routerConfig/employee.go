@@ -18,34 +18,34 @@ var routesEmployee = []Routers{
 		URI:            "/employee",
 		Method:         http.MethodGet,
 		Function:       controllers.List,
-		Authencication: false,
+		Authencication: true,
 	},
 
 	{
 		URI:            "/employee/{employeeID}",
 		Method:         http.MethodGet,
 		Function:       controllers.ListID,
-		Authencication: false,
+		Authencication: true,
 	},
 
 	{
 		URI:            "/employee/{employeeID}",
 		Method:         http.MethodPut,
 		Function:       controllers.Update,
-		Authencication: false,
+		Authencication: true,
 	},
 
 	{
 		URI:            "/employee/{employeeID}",
 		Method:         http.MethodDelete,
 		Function:       controllers.Delete,
-		Authencication: false,
+		Authencication: true,
 	},
 
 	{
 		URI:            "/employee/{employeeID}/updatePassWord",
 		Method:         http.MethodPost,
 		Function:       controllers.UpdatePassWord,
-		Authencication: false,
+		Authencication: true,
 	},
 }

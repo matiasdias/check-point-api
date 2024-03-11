@@ -1,12 +1,15 @@
 package controllers
 
 import (
-	"check-point/src/config"
+	config "check-point/src/db"
 	"check-point/src/models"
 	"check-point/src/repository"
 	"check-point/src/security"
+	"check-point/src/token"
+	"check-point/src/utils"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,30 +17,36 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// Create Responsável por criar um novo funcionário
 func Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	request, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		http.Error(w, "Error getting body data", http.StatusUnprocessableEntity)
+		err := utils.UnprocessableEntityError("Error getting body data")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	var employee models.Employee
 
 	if err = json.Unmarshal(request, &employee); err != nil {
-		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+		err := utils.BadRequestError("Error decoding JSON")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	if err = employee.Prepare(models.Cadastro); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		err := utils.BadRequestError(err.Error())
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		log.Printf("Error connecting to database: %v\n", err)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 
@@ -46,27 +55,24 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	repository := repository.NewRepositoryEmployee(db)
 	createEmployee, err := repository.CreateRepositoryEmployee(ctx, employee)
 	if err != nil {
-		http.Error(w, "Error creating employee", http.StatusInternalServerError)
-		return
-	}
-	responseJSON, err := json.Marshal(createEmployee)
-	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusBadRequest)
+		err := utils.InternalServerError("Error creating employee")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	w.Write(responseJSON)
+	utils.RespondWithSuccessJSON(w, createEmployee)
 }
 
+// List Responsável por listar um novo funcionário
 func List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	value := strings.ToLower(r.URL.Query().Get("search"))
 
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		log.Printf("Error connecting to database: %v\n", err)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 	defer db.Close()
@@ -80,203 +86,290 @@ func List(w http.ResponseWriter, r *http.Request) {
 	} else {
 		listEmployee, err = repository.ListRepositoryParamsEmployee(ctx, value)
 	}
-
 	if err != nil {
-		http.Error(w, "Error fetching employee list", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error fetching employee list")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	responseJSON, err := json.Marshal(listEmployee)
-	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
+	if value != "" && len(listEmployee) == 0 {
+		err := utils.NotFoundError("Employee not found")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
+	utils.RespondWithSuccessJSON(w, listEmployee)
 
 }
 
+// Update Responsável por atualizar um funcionário
 func Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
+
 	employeeID, err := strconv.ParseUint(vars["employeeID"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid employee ID", http.StatusBadRequest)
+		err := utils.BadRequestError("Invalid employee ID")
+		utils.RespondWithError(w, err)
+		return
+	}
+	employeeIDToken, err := token.ExtractEmployeeID(r)
+	if err != nil {
+		err := utils.BadRequestError("Failed to process id token")
+		utils.RespondWithError(w, err)
+		return
+	}
+	if employeeID != employeeIDToken {
+		err := utils.ForbiddenError("It is not possible to deleted a employee other than yours")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	request, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Error getting body data", http.StatusUnprocessableEntity)
+		err := utils.UnprocessableEntityError("Error getting body data")
+		utils.RespondWithError(w, err)
 		return
 	}
 	var employee models.Employee
 	if err = json.Unmarshal(request, &employee); err != nil {
-		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+		err := utils.BadRequestError("Error decoding JSON")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	if err = employee.Prepare(models.Edição); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		err := utils.BadRequestError(err.Error())
+		utils.RespondWithError(w, err)
 		return
 	}
 
+	// Abre a conexão com o banco
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
-
 	defer db.Close()
+
 	repository := repository.NewRepositoryEmployee(db)
-	if err = repository.UpdateRepositoryEmployee(ctx, employeeID, employee); err != nil {
-		http.Error(w, "Error update employee", http.StatusInternalServerError)
-		return
-	}
 
-	message := "Employee updated successfully"
-	responseJSON, err := json.Marshal(map[string]string{"message": message})
+	// Pesquisa o funcionario antes de atualizar
+	existingEmployee, err := repository.ListIDRepositoryEmployee(ctx, employeeID)
 	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error fetching employee")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
+	// Verifica se esse funcionario existe
+	if existingEmployee.ID == uint64(0) {
+		err := utils.NotFoundError("Employee not found")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	// Verifica se o email existe ou não no banco de dados
+	if exists, err := repository.FindByEmailExists(ctx, employee.Email); err != nil {
+		err := utils.InternalServerError("Error checking email existence")
+		utils.RespondWithError(w, err)
+		return
+	} else if exists {
+		err := utils.ConflitError("Email already exists")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	// atualiza o funcionario
+	if err = repository.UpdateRepositoryEmployee(ctx, employeeID, employee); err != nil {
+		err := utils.InternalServerError("Error update employee")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	utils.RespondWithSuccessMessage(w, "Employee updated successfully")
 
 }
 
+// Delete Responsável por remover um funcionǽrio
 func Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
+
 	employeeID, err := strconv.ParseUint(vars["employeeID"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid employee ID", http.StatusBadRequest)
+		err := utils.BadRequestError("Invalid employee ID")
+		utils.RespondWithError(w, err)
 		return
 	}
+
+	employeeIDToken, err := token.ExtractEmployeeID(r)
+	if err != nil {
+		err := utils.BadRequestError("Failed to process id token")
+		utils.RespondWithError(w, err)
+		return
+	}
+	if employeeID != employeeIDToken {
+		err := utils.ForbiddenError("It is not possible to deleted a employee other than yours")
+		utils.RespondWithError(w, err)
+		return
+	}
+
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 	defer db.Close()
 
 	repository := repository.NewRepositoryEmployee(db)
-	if err = repository.DeleteRepositoryEmployee(ctx, employeeID); err != nil {
-		http.Error(w, "Error deleted employee", http.StatusInternalServerError)
-		return
-	}
 
-	message := "Employee deleted successfully"
-	responseJSON, err := json.Marshal(map[string]string{"message": message})
+	// Pesquisa o funcionario antes de remover
+	existingEmployee, err := repository.ListIDRepositoryEmployee(ctx, employeeID)
 	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error fetching employee")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
+	// Verifica se esse funcionario existe
+	if existingEmployee.ID == uint64(0) {
+		err := utils.NotFoundError("Employee not found")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	// Remove o funcionario caso ele exista
+	if err = repository.DeleteRepositoryEmployee(ctx, employeeID); err != nil {
+		err := utils.InternalServerError("Error deleted employee")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	utils.RespondWithSuccessMessage(w, "Employee deleted successfully")
 }
 
+// ListID Responsável por listar um funcionário por id
 func ListID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
 	employeeID, err := strconv.ParseUint(vars["employeeID"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid employee ID", http.StatusBadRequest)
+		log.Printf("Invalid parameter: %v", err)
+		err := utils.BadRequestError("Invalid employee ID")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 	defer db.Close()
 
 	repository := repository.NewRepositoryEmployee(db)
+
 	employee, err := repository.ListIDRepositoryEmployee(ctx, employeeID)
 	if err != nil {
-		http.Error(w, "Error fetching employee", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error fetching employee")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	responseJSON, err := json.Marshal(employee)
-	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
+	if employee.ID == uint64(0) {
+		err := utils.NotFoundError("Employee not found")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
+	utils.RespondWithSuccessJSON(w, employee)
+
 }
 
+// UpdatePassWord Responsável por atualizar a senha do funcionário
 func UpdatePassWord(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 	employeeID, err := strconv.ParseUint(vars["employeeID"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid employee ID", http.StatusBadRequest)
+		err := utils.BadRequestError("Invalid employee ID")
+		utils.RespondWithError(w, err)
 		return
 	}
 	request, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Error getting body data", http.StatusUnprocessableEntity)
+		err := utils.UnprocessableEntityError("Error getting body data")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	var pass models.UpdatePassWord
 
 	if err = json.Unmarshal(request, &pass); err != nil {
-		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+		err := utils.BadRequestError("Error decoding JSON")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	db, err := config.Connection()
 	if err != nil {
-		http.Error(w, "Error connecting to database", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error connecting to database")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	defer db.Close()
 
 	repository := repository.NewRepositoryEmployee(db)
-	passSaveBank, err := repository.ListByPass(ctx, employeeID)
+
+	// Pesquisa o funcionario antes de remover
+	existingEmployee, err := repository.ListIDRepositoryEmployee(ctx, employeeID)
 	if err != nil {
-		http.Error(w, "Error search passWord employee", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error fetching employee")
+		utils.RespondWithError(w, err)
 		return
 	}
 
+	// Verifica se esse funcionario existe
+	if existingEmployee.ID == uint64(0) {
+		err := utils.NotFoundError("Employee not found")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	// Retorna a senha salva no banco do funcionairo
+	passSaveBank, err := repository.ListByPass(ctx, employeeID)
+	if err != nil {
+		err := utils.InternalServerError("Error search passWord employee")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	// Verifica se a senha salva banco é igual a senha atual
 	if err = security.VerifyPassWord(passSaveBank, pass.CurrentPassWord); err != nil {
-		http.Error(w, "The password saved in the bank is different from the current password", http.StatusUnauthorized)
+		err := utils.UnauthorizedError("The password saved in the bank is different from the current password")
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	newPassWordHash, err := security.Hash(pass.NewPassWord)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		err := utils.BadRequestError(err.Error())
+		utils.RespondWithError(w, err)
 		return
 	}
 
 	if err = repository.UpdatePassWord(ctx, employeeID, string(newPassWordHash)); err != nil {
-		http.Error(w, "Error updating password", http.StatusInternalServerError)
+		err := utils.InternalServerError("Error updating password")
+		utils.RespondWithError(w, err)
 		return
 	}
 
-	message := "Employee updated passWord successfully"
-	responseJSON, err := json.Marshal(map[string]string{"message": message})
-	if err != nil {
-		http.Error(w, "Error formatting JSON response", http.StatusInternalServerError)
-		return
-	}
+	utils.RespondWithSuccessMessage(w, "Employee updated passWord successfully")
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
 }
