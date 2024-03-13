@@ -22,9 +22,9 @@ func NewRepositoryEmployee(db *sql.DB) *Employee {
 // CreateRepositoryEmployee responsável pelo cadastro de um novo funcionário
 func (e Employee) CreateRepositoryEmployee(ctx context.Context, employee models.Employee) (*models.EmployeeResponse, error) {
 
-	insertQuery := "INSERT INTO public.funcionario (nome, email, telefone, senha, idade, cpf, cargo) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
+	insertQuery := "INSERT INTO public.funcionario (nome, email, telefone, senha, idade, cpf, cargo, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id"
 
-	_, err := e.db.ExecContext(ctx, insertQuery, employee.Name, employee.Email, employee.Telephone, employee.PassWord, employee.Age, employee.CPF, employee.Office)
+	_, err := e.db.ExecContext(ctx, insertQuery, employee.Name, employee.Email, employee.Telephone, employee.PassWord, employee.Age, employee.CPF, employee.Office, employee.Is_Admin)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (e Employee) CreateRepositoryEmployee(ctx context.Context, employee models.
 		CPF:       employee.CPF,
 		Office:    employee.Office,
 		Age:       employee.Age,
-		CriadoEm:  employee.CriadoEm,
+		Is_Admin:  employee.Is_Admin,
 	}
 
 	return employeeResponse, nil
@@ -52,7 +52,7 @@ func (e Employee) CreateRepositoryEmployee(ctx context.Context, employee models.
 
 // ListAllEmployee responsável pela listagem dos funcionários
 func (e Employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error) {
-	query := "SELECT id, nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario ORDER BY id ASC"
+	query := "SELECT id, nome, email, telefone, cargo, idade, cpf, is_admin, criadoem FROM public.funcionario ORDER BY id ASC"
 
 	rows, err := e.db.QueryContext(ctx, query)
 	if err != nil {
@@ -72,6 +72,7 @@ func (e Employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error
 			&employee.Office,
 			&employee.Age,
 			&employee.CPF,
+			&employee.Is_Admin,
 			&employee.CriadoEm); err != nil {
 			return nil, err
 		}
@@ -83,7 +84,7 @@ func (e Employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error
 
 // ListRepositoryParamsEmployee responsável pela listagem do funcionário por parametros
 func (e Employee) ListRepositoryParamsEmployee(ctx context.Context, params string) ([]models.Employee, error) {
-	selectQuery := "SELECT id, nome, email, telefone, cargo, idade, cpf, criadoem FROM public.funcionario"
+	selectQuery := "SELECT id, nome, email, telefone, cargo, idade, cpf, is_admin, criadoem FROM public.funcionario"
 
 	condition := []string{}
 
@@ -121,6 +122,7 @@ func (e Employee) ListRepositoryParamsEmployee(ctx context.Context, params strin
 			&employee.Office,
 			&employee.Age,
 			&employee.CPF,
+			&employee.Is_Admin,
 			&employee.CriadoEm,
 		); err != nil {
 			return nil, err
@@ -164,7 +166,8 @@ func (e Employee) DeleteRepositoryEmployee(ctx context.Context, ID uint64) error
 
 // ListIDRepositoryEmployee responsávio pela listagem do funcionǽrio por ID
 func (e Employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (models.Employee, error) {
-	query := "SELECT id, nome, email, telefone, idade, cpf, cargo, criadoem FROM public.funcionario WHERE id = $1"
+	// não retornar o cpf por que é um dado sensivel e não deve ser exibido
+	query := "SELECT id, nome, email, telefone, idade, cpf, cargo, is_admin, criadoem FROM public.funcionario WHERE id = $1"
 
 	var employee models.Employee
 	err := e.db.QueryRowContext(ctx, query, ID).
@@ -175,6 +178,7 @@ func (e Employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (mode
 			&employee.Age,
 			&employee.CPF,
 			&employee.Office,
+			&employee.Is_Admin,
 			&employee.CriadoEm)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -212,10 +216,10 @@ func (e Employee) UpdatePassWord(ctx context.Context, employeeID uint64, passWor
 
 // FindByEmail responsável por retornar o email e a senha do funcionário
 func (e Employee) FindByEmail(ctx context.Context, Email string) (models.Employee, error) {
-	query := "SELECT id, email, senha FROM public.funcionario WHERE email = $1"
+	query := "SELECT id, email, is_admin, senha FROM public.funcionario WHERE email = $1"
 
 	var employee models.Employee
-	err := e.db.QueryRowContext(ctx, query, Email).Scan(&employee.ID, &employee.Email, &employee.PassWord)
+	err := e.db.QueryRowContext(ctx, query, Email).Scan(&employee.ID, &employee.Email, &employee.Is_Admin, &employee.PassWord)
 	if err != nil {
 		return models.Employee{}, err
 	}
