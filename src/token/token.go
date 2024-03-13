@@ -13,7 +13,7 @@ import (
 )
 
 // CreateToken retorna um token assinado com as permissões do employee
-func CreateToken(employeeID uint64) (string, error) {
+func CreateToken(employeeID uint64, is_admin bool) (string, error) {
 	if employeeID == 0 {
 		return "", errors.New("Invalid Employee ID")
 	}
@@ -21,6 +21,7 @@ func CreateToken(employeeID uint64) (string, error) {
 	permissoes["authorized"] = true
 	permissoes["exp"] = time.Now().Add(time.Hour * 6).Unix()
 	permissoes["employeeID"] = employeeID
+	permissoes["is_admin"] = is_admin
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permissoes)
 
@@ -58,6 +59,24 @@ func ExtractEmployeeID(r *http.Request) (uint64, error) {
 	}
 
 	return 0, errors.New("Token inválido")
+}
+
+// ExtractEmployeeIDAdmin retorna o employee administtrador que está salvo no token
+func ExtractEmployeeIDAdmin(r *http.Request) (bool, error) {
+	tokenString := extractToken(r)
+	token, err := jwt.Parse(tokenString, returnVerificationKey)
+	if err != nil {
+		return false, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if isAdmin, exists := claims["is_admin"].(bool); exists {
+			return isAdmin, nil
+		}
+	}
+
+	return false, errors.New("Token inválido ou informações de administrador ausentes")
+
 }
 
 func extractToken(r *http.Request) string {

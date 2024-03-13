@@ -4,6 +4,7 @@ import (
 	config "check-point/src/db"
 	"check-point/src/models"
 	"check-point/src/repository"
+	"check-point/src/token"
 	"check-point/src/utils"
 	"encoding/json"
 	"io"
@@ -47,9 +48,23 @@ func CreateRecordPoint(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repository := repository.NewRepositoryRecordPoint(db)
+
+	// Verificar se o código do funcionário existe na tabela de funcionários
+	exists, err := repository.FindByEmployeeExists(ctx, point.EmployeeCode)
+	if err != nil {
+		err := utils.InternalServerError("Error checking if employeeID exists")
+		utils.RespondWithError(w, err)
+		return
+	}
+	if !exists {
+		err := utils.BadRequestError("EmployeeID does not exist")
+		utils.RespondWithError(w, err)
+		return
+	}
+
 	createPoint, err := repository.CreateRecordPoint(ctx, point)
 	if err != nil {
-		err := utils.InternalServerError("Error creating record point")
+		err := utils.InternalServerError("Error creating record point" + err.Error())
 		utils.RespondWithError(w, err)
 		return
 	}
@@ -61,6 +76,19 @@ func CreateRecordPoint(w http.ResponseWriter, r *http.Request) {
 func ListRecordPoint(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	value := strings.ToLower(r.URL.Query().Get("search"))
+
+	employeeIDAdmin, err := token.ExtractEmployeeIDAdmin(r)
+	if err != nil {
+		err := utils.BadRequestError("Failed to process is_admin token")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	if employeeIDAdmin == false {
+		err := utils.ForbiddenError("Only administrators can list all employees' points")
+		utils.RespondWithError(w, err)
+		return
+	}
 
 	db, err := config.Connection()
 	if err != nil {
@@ -93,9 +121,9 @@ func ListIDRecordPoint(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
-	recordID, err := strconv.ParseUint(vars["recordID"], 10, 64)
+	recordEmployeeID, err := strconv.ParseUint(vars["recordEmployeeID"], 10, 64)
 	if err != nil {
-		err := utils.BadRequestError("Invalid record ID")
+		err := utils.BadRequestError("Invalid employee ID")
 		utils.RespondWithError(w, err)
 		return
 	}
@@ -109,15 +137,15 @@ func ListIDRecordPoint(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	repository := repository.NewRepositoryRecordPoint(db)
-	existingPoint, err := repository.ListIDRepositoryRecordPoint(ctx, recordID)
+	existingPoint, err := repository.ListEmployeeIDRepositoryRecordPoint(ctx, recordEmployeeID)
 	if err != nil {
 		err := utils.InternalServerError("Error fetching record point")
 		utils.RespondWithError(w, err)
 		return
 	}
 
-	if existingPoint.ID == uint64(0) {
-		err := utils.NotFoundError("Record point not found")
+	if existingPoint.EmployeeCode == uint64(0) {
+		err := utils.NotFoundError("This employee does not have any points registered")
 		utils.RespondWithError(w, err)
 		return
 	}
@@ -130,9 +158,22 @@ func DeleteRecordPoint(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
-	recordID, err := strconv.ParseUint(vars["recordID"], 10, 64)
+	recordEmployeeID, err := strconv.ParseUint(vars["recordEmployeeID"], 10, 64)
 	if err != nil {
 		err := utils.BadRequestError("Invalid record ID")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	employeeIDAdmin, err := token.ExtractEmployeeIDAdmin(r)
+	if err != nil {
+		err := utils.BadRequestError("Failed to process is_admin token")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	if employeeIDAdmin == false {
+		err := utils.ForbiddenError("Only administrators can remove an employee's point")
 		utils.RespondWithError(w, err)
 		return
 	}
@@ -147,22 +188,22 @@ func DeleteRecordPoint(w http.ResponseWriter, r *http.Request) {
 
 	repository := repository.NewRepositoryRecordPoint(db)
 
-	// Pesquisa o ponto antes de remover
-	existingPoint, err := repository.ListIDRepositoryRecordPoint(ctx, recordID)
+	// Pesquisa o ponto do funcionário antes de remover
+	existingPoint, err := repository.ListEmployeeIDRepositoryRecordPoint(ctx, recordEmployeeID)
 	if err != nil {
 		err := utils.InternalServerError("Error fetching record poin")
 		utils.RespondWithError(w, err)
 		return
 	}
 
-	// Verifica se esse ponto existe
-	if existingPoint.ID == uint64(0) {
-		err := utils.NotFoundError("Record point not found")
+	// Verifica se esse funcionário passado no parametro existe antes de remover
+	if existingPoint.EmployeeCode == uint64(0) {
+		err := utils.NotFoundError("This employee does not have any points registered")
 		utils.RespondWithError(w, err)
 		return
 	}
 
-	if err = repository.DeleteRecordPoint(ctx, recordID); err != nil {
+	if err = repository.DeleteRecordPoint(ctx, recordEmployeeID); err != nil {
 		err := utils.InternalServerError("Error deleting record point")
 		utils.RespondWithError(w, err)
 		return
@@ -177,9 +218,22 @@ func UpdateRecordPoint(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
-	recordID, err := strconv.ParseUint(vars["recordID"], 10, 64)
+	recordEmployeeID, err := strconv.ParseUint(vars["recordEmployeeID"], 10, 64)
 	if err != nil {
 		err := utils.BadRequestError("Invalid record ID")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	employeeIDAdmin, err := token.ExtractEmployeeIDAdmin(r)
+	if err != nil {
+		err := utils.BadRequestError("Failed to process is_admin token")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	if employeeIDAdmin == false {
+		err := utils.ForbiddenError("Only administrators can update an employee's point")
 		utils.RespondWithError(w, err)
 		return
 	}
@@ -213,20 +267,20 @@ func UpdateRecordPoint(w http.ResponseWriter, r *http.Request) {
 
 	repository := repository.NewRepositoryRecordPoint(db)
 
-	existingPoint, err := repository.ListIDRepositoryRecordPoint(ctx, recordID)
+	existingPoint, err := repository.ListEmployeeIDRepositoryRecordPoint(ctx, recordEmployeeID)
 	if err != nil {
 		err := utils.InternalServerError("Error fetching record point")
 		utils.RespondWithError(w, err)
 		return
 	}
 
-	if existingPoint.ID == uint64(0) {
-		err := utils.NotFoundError("Record point not found")
+	if existingPoint.EmployeeCode == uint64(0) {
+		err := utils.NotFoundError("This employee does not have any points registered")
 		utils.RespondWithError(w, err)
 		return
 	}
 
-	if err = repository.UpdateRecordPoint(ctx, recordID, record); err != nil {
+	if err = repository.UpdateRecordPoint(ctx, recordEmployeeID, record); err != nil {
 		err := utils.InternalServerError("Error updating record point")
 		utils.RespondWithError(w, err)
 		return
