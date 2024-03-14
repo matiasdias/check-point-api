@@ -2,7 +2,7 @@
 
 **Description API**
 
-A API de check_point é um sistema de registro de ponto que permite registrar e gerenciar as entradas e saídas de funcionários de uma empresa. Algumas funcionalidades comuns incluem:
+A API de check_point é um sistema de registro de ponto que permite registrar e gerenciar as entradas e saídas de funcionários de uma empresa. 
 
 # Configs
 
