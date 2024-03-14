@@ -174,7 +174,7 @@ func (e Employee) DeleteRepositoryEmployee(ctx context.Context, ID uint64) error
 	return nil
 }
 
-// ListIDRepositoryEmployee responsávio pela listagem do funcionǽrio por ID
+// ListIDRepositoryEmployee responsávio pela listagem do funcionǽrio por Id
 func (e Employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (models.Employee, error) {
 	// não retornar o cpf por que é um dado sensivel e não deve ser exibido
 	query := "SELECT id, nome, email, telefone, idade, cpf, cargo, is_admin, criadoem FROM public.funcionario WHERE id = $1"
