@@ -7,4 +7,5 @@ A API de check_point é um sistema de registro de ponto que permite registrar e 
 **Parameter	Default**
 
 Config | config.api.json
+
 InternalAddress	| :3001
