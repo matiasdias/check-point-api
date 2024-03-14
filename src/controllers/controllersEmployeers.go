@@ -30,6 +30,19 @@ func Create(w http.ResponseWriter, r *http.Request) {
 
 	var employee models.Employee
 
+	employeeIDAdmin, err := token.ExtractEmployeeIDAdmin(r)
+	if err != nil {
+		err := utils.BadRequestError("Failed to process is_admin token")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	if employeeIDAdmin == false {
+		err := utils.ForbiddenError("Only admins can create new employees")
+		utils.RespondWithError(w, err)
+		return
+	}
+
 	if err = json.Unmarshal(request, &employee); err != nil {
 		err := utils.BadRequestError("Error decoding JSON")
 		utils.RespondWithError(w, err)
@@ -67,6 +80,12 @@ func Create(w http.ResponseWriter, r *http.Request) {
 func List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	value := strings.ToLower(r.URL.Query().Get("search"))
+	employeeIDAdmin, err := token.ExtractEmployeeIDAdmin(r)
+	if err != nil {
+		err := utils.BadRequestError("Failed to process is_admin token")
+		utils.RespondWithError(w, err)
+		return
+	}
 
 	db, err := config.Connection()
 	if err != nil {
@@ -82,9 +101,9 @@ func List(w http.ResponseWriter, r *http.Request) {
 	var listEmployee []models.Employee
 
 	if value == "" {
-		listEmployee, err = repository.ListAllEmployee(ctx)
+		listEmployee, err = repository.ListAllEmployee(ctx, employeeIDAdmin)
 	} else {
-		listEmployee, err = repository.ListRepositoryParamsEmployee(ctx, value)
+		listEmployee, err = repository.ListRepositoryParamsEmployee(ctx, value, employeeIDAdmin)
 	}
 	if err != nil {
 		err := utils.InternalServerError("Error fetching employee list")
@@ -113,14 +132,16 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, err)
 		return
 	}
-	employeeIDToken, err := token.ExtractEmployeeID(r)
+
+	employeeIDAdmin, err := token.ExtractEmployeeIDAdmin(r)
 	if err != nil {
-		err := utils.BadRequestError("Failed to process id token")
+		err := utils.BadRequestError("Failed to process is_admin token")
 		utils.RespondWithError(w, err)
 		return
 	}
-	if employeeID != employeeIDToken {
-		err := utils.ForbiddenError("It is not possible to deleted a employee other than yours")
+
+	if employeeIDAdmin == false {
+		err := utils.ForbiddenError("Only admins can update employees")
 		utils.RespondWithError(w, err)
 		return
 	}
@@ -171,11 +192,13 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verifica se o email existe ou não no banco de dados
-	if exists, err := repository.FindByEmailExists(ctx, employee.Email); err != nil {
+	exists, err := repository.FindByEmailExists(ctx, employee.Email)
+	if err != nil {
 		err := utils.InternalServerError("Error checking email existence")
 		utils.RespondWithError(w, err)
 		return
-	} else if exists {
+	}
+	if exists {
 		err := utils.ConflitError("Email already exists")
 		utils.RespondWithError(w, err)
 		return
@@ -204,14 +227,15 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	employeeIDToken, err := token.ExtractEmployeeID(r)
+	employeeIDAdmin, err := token.ExtractEmployeeIDAdmin(r)
 	if err != nil {
-		err := utils.BadRequestError("Failed to process id token")
+		err := utils.BadRequestError("Failed to process is_admin token")
 		utils.RespondWithError(w, err)
 		return
 	}
-	if employeeID != employeeIDToken {
-		err := utils.ForbiddenError("It is not possible to deleted a employee other than yours")
+
+	if employeeIDAdmin == false {
+		err := utils.ForbiddenError("Only admins can deleted employees")
 		utils.RespondWithError(w, err)
 		return
 	}
@@ -301,6 +325,19 @@ func UpdatePassWord(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, err)
 		return
 	}
+	employeeIDAdmin, err := token.ExtractEmployeeIDAdmin(r)
+	if err != nil {
+		err := utils.BadRequestError("Failed to process is_admin token")
+		utils.RespondWithError(w, err)
+		return
+	}
+
+	if employeeIDAdmin == false {
+		err := utils.ForbiddenError("Only administrators can update other employees passwords")
+		utils.RespondWithError(w, err)
+		return
+	}
+
 	request, err := io.ReadAll(r.Body)
 	if err != nil {
 		err := utils.UnprocessableEntityError("Error getting body data")
@@ -327,7 +364,6 @@ func UpdatePassWord(w http.ResponseWriter, r *http.Request) {
 
 	repository := repository.NewRepositoryEmployee(db)
 
-	// Pesquisa o funcionario antes de remover
 	existingEmployee, err := repository.ListIDRepositoryEmployee(ctx, employeeID)
 	if err != nil {
 		err := utils.InternalServerError("Error fetching employee")
@@ -335,7 +371,7 @@ func UpdatePassWord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verifica se esse funcionario existe
+	// Verifica se esse funcionário existe
 	if existingEmployee.ID == uint64(0) {
 		err := utils.NotFoundError("Employee not found")
 		utils.RespondWithError(w, err)

@@ -44,6 +44,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, err)
 		return
 	}
+	if employeeSaveBank.Email != employee.Email {
+		err := utils.UnauthorizedError("Invalid email")
+		utils.RespondWithError(w, err)
+		return
+	}
 
 	if err = security.VerifyPassWord(employeeSaveBank.PassWord, employee.PassWord); err != nil {
 		err := utils.UnauthorizedError("Error when verifying the user's password saved in the bank")
@@ -51,7 +56,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := token.CreateToken(employeeSaveBank.ID)
+	token, err := token.CreateToken(employeeSaveBank.ID, employeeSaveBank.Is_Admin)
 	if err != nil {
 		err := utils.InternalServerError("Error creating to token")
 		utils.RespondWithError(w, err)

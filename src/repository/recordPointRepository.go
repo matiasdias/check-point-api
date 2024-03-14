@@ -109,11 +109,11 @@ func (r RecordPoint) ListRepositoryParamsRecordPoint(ctx context.Context, params
 	return record, nil
 }
 
-func (r RecordPoint) ListIDRepositoryRecordPoint(ctx context.Context, ID uint64) (models.RecordWithEmployee, error) {
-	query := "SELECT r.id, r.codigo_funcionario, f.cargo, f.nome, f.email FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id WHERE r.id = $1"
+func (r RecordPoint) ListEmployeeIDRepositoryRecordPoint(ctx context.Context, employeeID uint64) (models.RecordWithEmployee, error) {
+	query := "SELECT r.id, r.codigo_funcionario, f.cargo, f.nome, f.email FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id WHERE f.id = $1"
 
 	var record models.RecordWithEmployee
-	err := r.db.QueryRowContext(ctx, query, ID).Scan(
+	err := r.db.QueryRowContext(ctx, query, employeeID).Scan(
 		&record.ID,
 		&record.EmployeeCode,
 		&record.Office,
@@ -121,27 +121,41 @@ func (r RecordPoint) ListIDRepositoryRecordPoint(ctx context.Context, ID uint64)
 		&record.Email,
 	)
 	if err == sql.ErrNoRows {
-		log.Printf("Error when searching point record by ID %d: %v", ID, err)
+		log.Printf("Error when searching time record by employee ID %d: %v", employeeID, err)
 		return models.RecordWithEmployee{}, nil
 	}
 	return record, nil
 }
 
-func (r RecordPoint) DeleteRecordPoint(ctx context.Context, ID uint64) error {
-	query := "DELETE FROM public.registro_ponto WHERE id = $1"
-	_, err := r.db.ExecContext(ctx, query, ID)
+func (r RecordPoint) DeleteRecordPoint(ctx context.Context, employeeID uint64) error {
+	query := "DELETE FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id WHERE f.id = $1"
+	_, err := r.db.ExecContext(ctx, query, employeeID)
 	if err != nil {
+		log.Printf("Error deleted record type with employee ID %d: %v", employeeID, err)
 		return err
 	}
 	return nil
 }
 
-func (r RecordPoint) UpdateRecordPoint(ctx context.Context, ID uint64, point models.RegisterPointer) error {
-	query := "UPDATE public.registro_ponto SET tipo_registro = $1 WHERE id = $2"
-	_, err := r.db.ExecContext(ctx, query, point.RecordType, ID)
+func (r RecordPoint) UpdateRecordPoint(ctx context.Context, employeeID uint64, point models.RegisterPointer) error {
+	query := "UPDATE public.registro_ponto SET tipo_registro = $1 WHERE codigo_funcionario = $2"
+	_, err := r.db.ExecContext(ctx, query, point.RecordType, employeeID)
 	if err != nil {
-		log.Printf("Error updating record Type with ID %d: %v", ID, err)
+		log.Printf("Error updating record type with employee ID %d: %v", employeeID, err)
 		return err
 	}
 	return nil
+}
+
+func (r RecordPoint) FindByEmployeeExists(ctx context.Context, employeeCode uint64) (bool, error) {
+	query := "SELECT EXISTS (SELECT 1 FROM public.funcionario WHERE id = $1)"
+
+	var exists bool
+	err := r.db.QueryRowContext(ctx, query, employeeCode).Scan(&exists)
+	if err != nil {
+		log.Printf("Error checking if id employee exists: %v", err)
+		return false, err
+	}
+
+	return exists, nil
 }

@@ -18,6 +18,7 @@ const (
 // Employee responsavel pelo retorno dos campos do funcionário
 type Employee struct {
 	ID        uint64    `json:"id,omitempty"`
+	Is_Admin  bool      `json:"is_admin,omitempty" binding:"required"`
 	Name      string    `json:"nome,omitempty" binding:"required"`
 	Email     string    `json:"email,omitempty" binding:"required"`
 	Telephone string    `json:"telefone,omitempty" binding:"required"`
@@ -26,12 +27,13 @@ type Employee struct {
 	Office    string    `json:"office,omitempty" binding:"required"`
 	Age       uint64    `json:"age,omitempty" binding:"required"`
 	CriadoEm  time.Time `json:"criadoEm,omitempty"`
-	UpdateEm  time.Time `json:"updateem,omitempty"`
+	UpdateEm  time.Time `json:"updateEm,omitempty"`
 }
 
 // EmployeeResponse responsavel pelo retorno dos campos do funcionário sem a senha
 type EmployeeResponse struct {
 	ID        uint64    `json:"id,omitempty"`
+	Is_Admin  bool      `json:"is_admin,omitempty" binding:"required"`
 	Name      string    `json:"nome,omitempty" binding:"required"`
 	Email     string    `json:"email,omitempty" binding:"required"`
 	Telephone string    `json:"telefone,omitempty" binding:"required"`
@@ -39,7 +41,7 @@ type EmployeeResponse struct {
 	Office    string    `json:"office,omitempty" binding:"required"`
 	Age       uint64    `json:"age,omitempty" binding:"required"`
 	CriadoEm  time.Time `json:"criadoEm,omitempty"`
-	UpdateEm  time.Time `json:"updateem,omitempty"`
+	UpdateEm  time.Time `json:"updateEm,omitempty"`
 }
 
 func (e *Employee) Prepare(stage string) error {
