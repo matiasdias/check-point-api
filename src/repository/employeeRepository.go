@@ -51,8 +51,13 @@ func (e Employee) CreateRepositoryEmployee(ctx context.Context, employee models.
 }
 
 // ListAllEmployee responsável pela listagem dos funcionários
-func (e Employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error) {
-	query := "SELECT id, nome, email, telefone, cargo, idade, cpf, is_admin, criadoem FROM public.funcionario ORDER BY id ASC"
+func (e Employee) ListAllEmployee(ctx context.Context, isAdmin bool) ([]models.Employee, error) {
+	var query string
+	if isAdmin {
+		query = "SELECT id, nome, email, telefone, cargo, idade, cpf, is_admin, criadoem FROM public.funcionario ORDER BY id ASC"
+	} else {
+		query = "SELECT id, nome, email, telefone, cargo, idade, concat(substring(cpf, 1, length(cpf)-8), '********') as cpf, is_admin, criadoem FROM public.funcionario ORDER BY id ASC"
+	}
 
 	rows, err := e.db.QueryContext(ctx, query)
 	if err != nil {
@@ -83,8 +88,13 @@ func (e Employee) ListAllEmployee(ctx context.Context) ([]models.Employee, error
 }
 
 // ListRepositoryParamsEmployee responsável pela listagem do funcionário por parametros
-func (e Employee) ListRepositoryParamsEmployee(ctx context.Context, params string) ([]models.Employee, error) {
-	selectQuery := "SELECT id, nome, email, telefone, cargo, idade, cpf, is_admin, criadoem FROM public.funcionario"
+func (e Employee) ListRepositoryParamsEmployee(ctx context.Context, params string, isAdmin bool) ([]models.Employee, error) {
+	var selectQuery string
+	if isAdmin {
+		selectQuery = "SELECT id, nome, email, telefone, cargo, idade, cpf, is_admin, criadoem FROM public.funcionario"
+	} else {
+		selectQuery = "SELECT id, nome, email, telefone, cargo, idade, concat(substring(cpf, 1, length(cpf)-8), '********') as cpf, is_admin, criadoem FROM public.funcionario"
+	}
 
 	condition := []string{}
 
@@ -164,7 +174,7 @@ func (e Employee) DeleteRepositoryEmployee(ctx context.Context, ID uint64) error
 	return nil
 }
 
-// ListIDRepositoryEmployee responsávio pela listagem do funcionǽrio por ID
+// ListIDRepositoryEmployee responsávio pela listagem do funcionǽrio por Id
 func (e Employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (models.Employee, error) {
 	// não retornar o cpf por que é um dado sensivel e não deve ser exibido
 	query := "SELECT id, nome, email, telefone, idade, cpf, cargo, is_admin, criadoem FROM public.funcionario WHERE id = $1"

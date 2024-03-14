@@ -80,6 +80,12 @@ func Create(w http.ResponseWriter, r *http.Request) {
 func List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	value := strings.ToLower(r.URL.Query().Get("search"))
+	employeeIDAdmin, err := token.ExtractEmployeeIDAdmin(r)
+	if err != nil {
+		err := utils.BadRequestError("Failed to process is_admin token")
+		utils.RespondWithError(w, err)
+		return
+	}
 
 	db, err := config.Connection()
 	if err != nil {
@@ -95,9 +101,9 @@ func List(w http.ResponseWriter, r *http.Request) {
 	var listEmployee []models.Employee
 
 	if value == "" {
-		listEmployee, err = repository.ListAllEmployee(ctx)
+		listEmployee, err = repository.ListAllEmployee(ctx, employeeIDAdmin)
 	} else {
-		listEmployee, err = repository.ListRepositoryParamsEmployee(ctx, value)
+		listEmployee, err = repository.ListRepositoryParamsEmployee(ctx, value, employeeIDAdmin)
 	}
 	if err != nil {
 		err := utils.InternalServerError("Error fetching employee list")

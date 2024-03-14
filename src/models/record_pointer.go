@@ -21,6 +21,7 @@ type RegisterPointer struct {
 	LunchEntryTime  time.Time `json:"hora_entrada_almoco"`
 	ReturnTimeLunch time.Time `json:"hora_retorno_almoco"`
 	WorkedHours     float64   `json:"horas_trabalhadas"`
+	Overtime        float64   `json:"horas_extras"`
 }
 
 func (r *RegisterPointer) PreparePoint(stage string) error {
