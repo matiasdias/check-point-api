@@ -39,7 +39,9 @@ func (r *RecordPoint) CreateRecordPoint(ctx context.Context, point models.Regist
 }
 
 func (r RecordPoint) ListAllRecordPoint(ctx context.Context) ([]models.RecordWithEmployee, error) {
-	query := "SELECT r.id, r.codigo_funcionario, f.nome, f.email, f.cargo FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id ORDER BY r.id ASC"
+	query := `SELECT r.id, r.codigo_funcionario, r.hora_entrada, r.hora_entrada_almoco, 
+	r.hora_retorno_almoco, r.hora_saida, f.nome, f.email, f.cargo FROM public.registro_ponto r 
+	INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id ORDER BY r.id ASC`
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -48,12 +50,15 @@ func (r RecordPoint) ListAllRecordPoint(ctx context.Context) ([]models.RecordWit
 	defer rows.Close()
 
 	record := []models.RecordWithEmployee{}
-
 	for rows.Next() {
 		var recordP models.RecordWithEmployee
 		if err = rows.Scan(
 			&recordP.ID,
 			&recordP.EmployeeCode,
+			&recordP.EntryTime,
+			&recordP.LunchEntryTime,
+			&recordP.ReturnTimeLunch,
+			&recordP.DepartureTime,
 			&recordP.Name,
 			&recordP.Email,
 			&recordP.Office,
@@ -67,7 +72,9 @@ func (r RecordPoint) ListAllRecordPoint(ctx context.Context) ([]models.RecordWit
 }
 
 func (r RecordPoint) ListRepositoryParamsRecordPoint(ctx context.Context, params string) ([]models.RecordWithEmployee, error) {
-	selectQuery := "SELECT r.id, r.codigo_funcionario, f.nome, f.email FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id"
+	selectQuery := `SELECT r.id, r.codigo_funcionario, r.hora_entrada, r.hora_entrada_almoco, 
+	r.hora_retorno_almoco, r.hora_saida, f.nome, f.email, f.cargo FROM public.registro_ponto r 
+	INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id`
 
 	condition := []string{}
 
@@ -98,8 +105,13 @@ func (r RecordPoint) ListRepositoryParamsRecordPoint(ctx context.Context, params
 		if err := rows.Scan(
 			&recordP.ID,
 			&recordP.EmployeeCode,
+			&recordP.EntryTime,
+			&recordP.LunchEntryTime,
+			&recordP.ReturnTimeLunch,
+			&recordP.DepartureTime,
 			&recordP.Name,
 			&recordP.Email,
+			&recordP.Office,
 		); err != nil {
 			return nil, err
 		}
@@ -110,15 +122,20 @@ func (r RecordPoint) ListRepositoryParamsRecordPoint(ctx context.Context, params
 }
 
 func (r RecordPoint) ListEmployeeIDRepositoryRecordPoint(ctx context.Context, employeeID uint64) (models.RecordWithEmployee, error) {
-	query := "SELECT r.id, r.codigo_funcionario, f.cargo, f.nome, f.email FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id WHERE f.id = $1"
-
+	query := `SELECT r.id, r.codigo_funcionario, r.hora_entrada, r.hora_entrada_almoco, 
+	r.hora_retorno_almoco, r.hora_saida, f.nome, f.email, f.cargo FROM public.registro_ponto r 
+	INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id WHERE f.id = $1`
 	var record models.RecordWithEmployee
 	err := r.db.QueryRowContext(ctx, query, employeeID).Scan(
 		&record.ID,
 		&record.EmployeeCode,
-		&record.Office,
+		&record.EntryTime,
+		&record.LunchEntryTime,
+		&record.ReturnTimeLunch,
+		&record.DepartureTime,
 		&record.Name,
 		&record.Email,
+		&record.Office,
 	)
 	if err == sql.ErrNoRows {
 		log.Printf("Error when searching time record by employee ID %d: %v", employeeID, err)

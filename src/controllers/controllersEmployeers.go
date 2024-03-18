@@ -191,17 +191,19 @@ func Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verifica se o email existe ou não no banco de dados
-	exists, err := repository.FindByEmailExists(ctx, employee.Email)
-	if err != nil {
-		err := utils.InternalServerError("Error checking email existence")
-		utils.RespondWithError(w, err)
-		return
-	}
-	if exists {
-		err := utils.ConflitError("Email already exists")
-		utils.RespondWithError(w, err)
-		return
+	if employee.Email != existingEmployee.Email {
+		// Verifica se o email existe ou não no banco de dados
+		exists, err := repository.FindByEmailExists(ctx, employee.Email)
+		if err != nil {
+			err := utils.InternalServerError("Error checking email existence")
+			utils.RespondWithError(w, err)
+			return
+		}
+		if exists {
+			err := utils.ConflitError("Email already exists")
+			utils.RespondWithError(w, err)
+			return
+		}
 	}
 
 	// atualiza o funcionario
@@ -374,21 +376,6 @@ func UpdatePassWord(w http.ResponseWriter, r *http.Request) {
 	// Verifica se esse funcionário existe
 	if existingEmployee.ID == uint64(0) {
 		err := utils.NotFoundError("Employee not found")
-		utils.RespondWithError(w, err)
-		return
-	}
-
-	// Retorna a senha salva no banco do funcionairo
-	passSaveBank, err := repository.ListByPass(ctx, employeeID)
-	if err != nil {
-		err := utils.InternalServerError("Error search passWord employee")
-		utils.RespondWithError(w, err)
-		return
-	}
-
-	// Verifica se a senha salva banco é igual a senha atual
-	if err = security.VerifyPassWord(passSaveBank, pass.CurrentPassWord); err != nil {
-		err := utils.UnauthorizedError("The password saved in the bank is different from the current password")
 		utils.RespondWithError(w, err)
 		return
 	}

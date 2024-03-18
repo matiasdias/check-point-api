@@ -200,18 +200,6 @@ func (e Employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (mode
 	return employee, nil
 }
 
-// ListByPass responsável por listar a senha do funcionário
-func (e Employee) ListByPass(ctx context.Context, employeeID uint64) (string, error) {
-	query := "SELECT senha FROM public.funcionario WHERE id = $1"
-	var employee models.Employee
-	err := e.db.QueryRowContext(ctx, query, employeeID).Scan(&employee.PassWord)
-	if err != nil {
-		return "", err
-	}
-
-	return employee.PassWord, nil
-}
-
 // UpdatePassWord responsável por atualizar a senha do funcionário
 func (e Employee) UpdatePassWord(ctx context.Context, employeeID uint64, passWord string) error {
 	query := "UPDATE public.funcionario SET senha = $1 WHERE id = $2"
