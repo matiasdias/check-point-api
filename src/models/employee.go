@@ -26,6 +26,7 @@ type Employee struct {
 	CPF       string    `json:"cpf,omitempty" binding:"required"`
 	Office    string    `json:"office,omitempty" binding:"required"`
 	Age       uint64    `json:"age,omitempty" binding:"required"`
+	Gender    string    `json:"genero,omitempty" binding:"required"`
 	CriadoEm  time.Time `json:"criadoEm,omitempty"`
 	UpdateEm  time.Time `json:"updateEm,omitempty"`
 }
@@ -40,6 +41,7 @@ type EmployeeResponse struct {
 	CPF       string    `json:"cpf,omitempty" binding:"required"`
 	Office    string    `json:"office,omitempty" binding:"required"`
 	Age       uint64    `json:"age,omitempty" binding:"required"`
+	Gender    string    `json:"genero,omitempty" binding:"required"`
 	CriadoEm  time.Time `json:"criadoEm,omitempty"`
 	UpdateEm  time.Time `json:"updateEm,omitempty"`
 }
@@ -63,18 +65,31 @@ func (e *Employee) validate(stage string) error {
 	if err := checkmail.ValidateFormat(e.Email); err != nil {
 		return errors.New("The email entered is invalid")
 	}
-	if e.Telephone == "" {
-		return errors.New("Phone is required and cannot be blank")
+	if stage == Cadastro || stage == Edição {
+		if e.Telephone == "" {
+			return errors.New("Phone is required and cannot be blank")
+		} else {
+			formattedTelephone, err := utils.FormatTelephone(e.Telephone)
+			if err != nil {
+				return err
+			}
+			e.Telephone = formattedTelephone
+		}
+	}
+
+	if e.Gender == "" {
+		return errors.New("Gender is required and cannot be blank")
 	}
 
 	if stage == Cadastro {
 		if e.CPF == "" {
 			return errors.New("CPF is required and cannot be blank")
 		} else {
-			err := utils.FormatCPF(e.CPF)
+			formattedCPF, err := utils.FormatCPF(e.CPF)
 			if err != nil {
 				return err
 			}
+			e.CPF = formattedCPF
 		}
 	}
 	if e.Age < 18 {

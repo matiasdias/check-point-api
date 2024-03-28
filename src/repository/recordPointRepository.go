@@ -39,9 +39,7 @@ func (r *RecordPoint) CreateRecordPoint(ctx context.Context, point models.Regist
 }
 
 func (r RecordPoint) ListAllRecordPoint(ctx context.Context) ([]models.RecordWithEmployee, error) {
-	query := `SELECT r.id, r.codigo_funcionario, r.hora_entrada, r.hora_entrada_almoco, 
-	r.hora_retorno_almoco, r.hora_saida, f.nome, f.email, f.cargo FROM public.registro_ponto r 
-	INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id ORDER BY r.id ASC`
+	query := `SELECT r.id, r.codigo_funcionario, r.hora_entrada, r.hora_entrada_almoco, r.hora_retorno_almoco, r.hora_saida, r.horas_trabalhadas, r.horas_extras, f.nome, f.email, f.cargo FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id ORDER BY r.id ASC`
 
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -59,6 +57,8 @@ func (r RecordPoint) ListAllRecordPoint(ctx context.Context) ([]models.RecordWit
 			&recordP.LunchEntryTime,
 			&recordP.ReturnTimeLunch,
 			&recordP.DepartureTime,
+			&recordP.WorkedHours,
+			&recordP.Overtime,
 			&recordP.Name,
 			&recordP.Email,
 			&recordP.Office,
@@ -73,7 +73,7 @@ func (r RecordPoint) ListAllRecordPoint(ctx context.Context) ([]models.RecordWit
 
 func (r RecordPoint) ListRepositoryParamsRecordPoint(ctx context.Context, params string) ([]models.RecordWithEmployee, error) {
 	selectQuery := `SELECT r.id, r.codigo_funcionario, r.hora_entrada, r.hora_entrada_almoco, 
-	r.hora_retorno_almoco, r.hora_saida, f.nome, f.email, f.cargo FROM public.registro_ponto r 
+	r.hora_retorno_almoco, r.hora_saida, r.horas_trabalhadas, r.horas_extras,  f.nome, f.email, f.cargo FROM public.registro_ponto r 
 	INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id`
 
 	condition := []string{}
@@ -109,6 +109,8 @@ func (r RecordPoint) ListRepositoryParamsRecordPoint(ctx context.Context, params
 			&recordP.LunchEntryTime,
 			&recordP.ReturnTimeLunch,
 			&recordP.DepartureTime,
+			&recordP.WorkedHours,
+			&recordP.Overtime,
 			&recordP.Name,
 			&recordP.Email,
 			&recordP.Office,
@@ -123,7 +125,7 @@ func (r RecordPoint) ListRepositoryParamsRecordPoint(ctx context.Context, params
 
 func (r RecordPoint) ListEmployeeIDRepositoryRecordPoint(ctx context.Context, employeeID uint64) (models.RecordWithEmployee, error) {
 	query := `SELECT r.id, r.codigo_funcionario, r.hora_entrada, r.hora_entrada_almoco, 
-	r.hora_retorno_almoco, r.hora_saida, f.nome, f.email, f.cargo FROM public.registro_ponto r 
+	r.hora_retorno_almoco, r.hora_saida, r.horas_trabalhadas, r.horas_extras, f.nome, f.email, f.cargo FROM public.registro_ponto r 
 	INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id WHERE f.id = $1`
 	var record models.RecordWithEmployee
 	err := r.db.QueryRowContext(ctx, query, employeeID).Scan(
@@ -133,6 +135,8 @@ func (r RecordPoint) ListEmployeeIDRepositoryRecordPoint(ctx context.Context, em
 		&record.LunchEntryTime,
 		&record.ReturnTimeLunch,
 		&record.DepartureTime,
+		&record.WorkedHours,
+		&record.Overtime,
 		&record.Name,
 		&record.Email,
 		&record.Office,
@@ -145,7 +149,8 @@ func (r RecordPoint) ListEmployeeIDRepositoryRecordPoint(ctx context.Context, em
 }
 
 func (r RecordPoint) DeleteRecordPoint(ctx context.Context, employeeID uint64) error {
-	query := "DELETE FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id WHERE f.id = $1"
+	//query := "DELETE FROM public.registro_ponto r INNER JOIN public.funcionario f ON r.codigo_funcionario = f.id WHERE f.id = $1"
+	query := "DELETE FROM public.registro_ponto USING public.funcionario WHERE public.registro_ponto.codigo_funcionario = public.funcionario.id AND public.funcionario.id = $1"
 	_, err := r.db.ExecContext(ctx, query, employeeID)
 	if err != nil {
 		log.Printf("Error deleted record type with employee ID %d: %v", employeeID, err)

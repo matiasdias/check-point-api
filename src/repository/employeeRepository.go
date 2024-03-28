@@ -22,9 +22,9 @@ func NewRepositoryEmployee(db *sql.DB) *Employee {
 // CreateRepositoryEmployee responsável pelo cadastro de um novo funcionário
 func (e Employee) CreateRepositoryEmployee(ctx context.Context, employee models.Employee) (*models.EmployeeResponse, error) {
 
-	insertQuery := "INSERT INTO public.funcionario (nome, email, telefone, senha, idade, cpf, cargo, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id"
+	insertQuery := "INSERT INTO public.funcionario (nome, email, telefone, senha, idade, genero, cpf, cargo, is_admin) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id"
 
-	_, err := e.db.ExecContext(ctx, insertQuery, employee.Name, employee.Email, employee.Telephone, employee.PassWord, employee.Age, employee.CPF, employee.Office, employee.Is_Admin)
+	_, err := e.db.ExecContext(ctx, insertQuery, employee.Name, employee.Email, employee.Telephone, employee.PassWord, employee.Age, employee.Gender, employee.CPF, employee.Office, employee.Is_Admin)
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +43,7 @@ func (e Employee) CreateRepositoryEmployee(ctx context.Context, employee models.
 		Telephone: employee.Telephone,
 		CPF:       employee.CPF,
 		Office:    employee.Office,
+		Gender:    employee.Gender,
 		Age:       employee.Age,
 		Is_Admin:  employee.Is_Admin,
 	}
@@ -91,9 +92,9 @@ func (e Employee) ListAllEmployee(ctx context.Context, isAdmin bool) ([]models.E
 func (e Employee) ListRepositoryParamsEmployee(ctx context.Context, params string, isAdmin bool) ([]models.Employee, error) {
 	var selectQuery string
 	if isAdmin {
-		selectQuery = "SELECT id, nome, email, telefone, cargo, idade, cpf, is_admin, criadoem FROM public.funcionario"
+		selectQuery = "SELECT id, nome, email, telefone, cargo, idade, genero, cpf, is_admin, criadoem FROM public.funcionario"
 	} else {
-		selectQuery = "SELECT id, nome, email, telefone, cargo, idade, concat(substring(cpf, 1, length(cpf)-8), '********') as cpf, is_admin, criadoem FROM public.funcionario"
+		selectQuery = "SELECT id, nome, email, telefone, cargo, idade, genero, concat(substring(cpf, 1, length(cpf)-8), '********') as cpf, is_admin, criadoem FROM public.funcionario"
 	}
 
 	condition := []string{}
@@ -109,7 +110,7 @@ func (e Employee) ListRepositoryParamsEmployee(ctx context.Context, params strin
 		values = append(values, "%"+val+"%", "%"+val+"%", "%"+val+"%")
 	}
 
-	if len(condition) == 0 { //len() comprimento da string, array e slice
+	if len(condition) == 0 {
 		return nil, errors.New("No search parameters provided")
 	}
 
@@ -131,6 +132,7 @@ func (e Employee) ListRepositoryParamsEmployee(ctx context.Context, params strin
 			&employee.Telephone,
 			&employee.Office,
 			&employee.Age,
+			&employee.Gender,
 			&employee.CPF,
 			&employee.Is_Admin,
 			&employee.CriadoEm,
@@ -176,8 +178,7 @@ func (e Employee) DeleteRepositoryEmployee(ctx context.Context, ID uint64) error
 
 // ListIDRepositoryEmployee responsávio pela listagem do funcionǽrio por Id
 func (e Employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (models.Employee, error) {
-	// não retornar o cpf por que é um dado sensivel e não deve ser exibido
-	query := "SELECT id, nome, email, telefone, idade, cpf, cargo, is_admin, criadoem FROM public.funcionario WHERE id = $1"
+	query := "SELECT id, nome, email, telefone, idade, genero, cpf, cargo, is_admin, criadoem, updateem FROM public.funcionario WHERE id = $1"
 
 	var employee models.Employee
 	err := e.db.QueryRowContext(ctx, query, ID).
@@ -186,10 +187,12 @@ func (e Employee) ListIDRepositoryEmployee(ctx context.Context, ID uint64) (mode
 			&employee.Email,
 			&employee.Telephone,
 			&employee.Age,
+			&employee.Gender,
 			&employee.CPF,
 			&employee.Office,
 			&employee.Is_Admin,
-			&employee.CriadoEm)
+			&employee.CriadoEm,
+			&employee.UpdateEm)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("Error list employee with ID %d: %v", ID, err)
