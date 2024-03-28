@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS registro_ponto (
     id serial PRIMARY KEY,
     codigo_funcionario integer NOT NULL,
-    criado_em timestamp with time zone NOT NULL DEFAULT current_timestamp,
+    criado_em timestamp DEFAULT now() NOT NULL,
     tipo_registro varchar(15) NOT NULL,  
     hora_entrada time,
     hora_saida time,
